@@ -1,0 +1,6 @@
+﻿services:
+  bookmarker:
+    image: bookmarker
+    build:
+      context: .
+      dockerfile: Bookmarker/Dockerfile
