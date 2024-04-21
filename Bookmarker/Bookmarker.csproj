@@ -18,4 +18,8 @@
       <PackageReference Include="Remora.Discord.Gateway" Version="12.0.1" />
       <PackageReference Include="VTP.Remora.Discord.HTTPInteractions" Version="1.0.3" />
     </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\PalladiumUtils\PalladiumUtils.csproj" />
+    </ItemGroup>
 </Project>
