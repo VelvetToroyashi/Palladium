@@ -39,7 +39,7 @@ public static class EndpointExtensions
                 return Results.BadRequest();
             }
 
-            if (content.files is { IsDefined: false })
+            if (content.files.IsDefined())
             {
                 context.Response.Headers.ContentType = "application/json";
                 return Results.Ok(content.stringContent);
