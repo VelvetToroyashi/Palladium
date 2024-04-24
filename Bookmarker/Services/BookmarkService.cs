@@ -51,6 +51,12 @@ public class BookmarkService(IDbContextFactory<BookmarkContext> contextFactory)
         return Results.Successful(bookmark);
     }
     
+    /// <summary>
+    /// Gets a bookmark by its ID.
+    /// </summary>
+    /// <param name="id">The ID of the bookmark</param>
+    /// <param name="userID">The ID of the user requesting the bookmark</param>
+    /// <returns>The bookmark if it exists and the user has access to it.</returns>
     public async ValueTask<Result<BookmarkEntity>> GetBookmarkAsync(int id, Snowflake userID)
     {
         await using BookmarkContext context = await contextFactory.CreateDbContextAsync();        
@@ -61,6 +67,11 @@ public class BookmarkService(IDbContextFactory<BookmarkContext> contextFactory)
             Results.NotFound(BookmarkNotFoundError, bookmark);
     }
     
+    /// <summary>
+    /// Gets all bookmarks for a user.
+    /// </summary>
+    /// <param name="userID">The ID of the user to return bookmarks for</param>
+    /// <returns>A list of bookmarks for the given user.</returns>
     public async ValueTask<IReadOnlyList<BookmarkEntity>> GetBookmarksAsync(Snowflake userID)
     {
         await using BookmarkContext context = await contextFactory.CreateDbContextAsync();
@@ -72,6 +83,12 @@ public class BookmarkService(IDbContextFactory<BookmarkContext> contextFactory)
         return bookmarks;
     }
     
+    /// <summary>
+    /// Deletes a bookmark by its ID.
+    /// </summary>
+    /// <param name="id">The ID of the bookmark to delete.</param>
+    /// <param name="userID">The ID of the user deleting the bookmark.</param>
+    /// <returns></returns>
     public async ValueTask<Result> DeleteBookmarkAsync(int id, Snowflake userID)
     {
         await using BookmarkContext context = await contextFactory.CreateDbContextAsync();
