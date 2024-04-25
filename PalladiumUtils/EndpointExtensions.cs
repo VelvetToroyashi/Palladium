@@ -21,7 +21,7 @@ public static class EndpointExtensions
     /// configuration of the app with the key of "PUBLIC_KEY".</remarks>
     public static RouteHandlerBuilder AddInteractionEndpoint(this WebApplication app)
     {
-        return app.MapGet("/interaction", async (HttpContext context, WebhookInteractionHelper interactions, IConfiguration config) =>
+        return app.MapPost("/interaction", async (HttpContext context, WebhookInteractionHelper interactions, IConfiguration config) =>
         {
             var hasHeaders = DiscordHeaders.TryExtractHeaders(context.Request.Headers, out var timestamp, out var signature);
             var body = await new StreamReader(context.Request.Body).ReadToEndAsync();
