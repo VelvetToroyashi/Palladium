@@ -1,6 +1,10 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using Remora.Discord.API.Abstractions.Objects;
+using Remora.Discord.API.Objects;
 using Remora.Rest.Core;
 using Remora.Results;
 using RemoraHTTPInteractions.Services;
@@ -21,7 +25,13 @@ public static class EndpointExtensions
     /// configuration of the app with the key of "PUBLIC_KEY".</remarks>
     public static RouteHandlerBuilder AddInteractionEndpoint(this WebApplication app)
     {
-        return app.MapPost("/interaction", async (HttpContext context, WebhookInteractionHelper interactions, IConfiguration config) =>
+        return app.MapPost("/interaction", async 
+        (
+            HttpContext context,
+            WebhookInteractionHelper interactions,
+            IConfiguration config,
+            IOptionsMonitor<JsonSerializerOptions> json
+        ) =>
         {
             var hasHeaders = DiscordHeaders.TryExtractHeaders(context.Request.Headers, out var timestamp, out var signature);
             var body = await new StreamReader(context.Request.Body).ReadToEndAsync();
@@ -29,6 +39,11 @@ public static class EndpointExtensions
             if (!hasHeaders || !DiscordHeaders.VerifySignature(body, timestamp!, signature!, config["PUBLIC_KEY"]!))
             {
                 return Results.Unauthorized();
+            }
+
+            if (body.Contains("\"type\":1"))
+            {
+                return Results.Json(new InteractionResponse(InteractionCallbackType.Pong), json.Get("Discord"));
             }
 
             Result<(string, Optional<IReadOnlyDictionary<string, Stream>>)> result = await interactions.HandleInteractionAsync(body);
@@ -39,10 +54,9 @@ public static class EndpointExtensions
                 return Results.BadRequest();
             }
 
-            if (content.files.IsDefined())
+            if (!content.files.IsDefined())
             {
-                context.Response.Headers.ContentType = "application/json";
-                return Results.Ok(content.stringContent);
+                return Results.Content(content.stringContent, "application/json");
             }
 
             MultipartFormDataContent payload = new();
