@@ -1,7 +1,17 @@
+using Bookmarker.Commands;
+using Bookmarker.Data;
+using Bookmarker.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using PalladiumUtils;
+using Remora.Commands.Extensions;
+using Remora.Commands.Parsers;
+using Remora.Discord.API.Abstractions.Objects;
+using Remora.Discord.Commands.Extensions;
+using Remora.Discord.Commands.Parsers;
+using Remora.Discord.Commands.Services;
+using Remora.Discord.Gateway.Extensions;
 using RemoraHTTPInteractions.Extensions;
-
-
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -9,10 +19,36 @@ builder.Configuration
        .AddEnvironmentVariables()
        .AddJsonFile("config.json", optional: true);
 
+builder.Services.AddDiscordGateway(s => s.GetService<IConfiguration>()!["CLIENT_TOKEN"]!);
+
 builder.Services.AddHTTPInteractionAPIs();
+
+builder.Services.AddDiscordCommands(true, false);
+
+builder.Services.AddDbContextFactory<BookmarkContext>(o => o.UseSqlite("Data Source=./bookmarks.db"));
+builder.Services.AddSingleton<BookmarkService>();
+builder.Services.AddCommandTree().WithCommandGroup<BookmarkCommands>();
+
+builder.Services.AddScoped<MessageParser>();
+builder.Services.Replace
+(
+       ServiceDescriptor.Describe
+       (
+              typeof(ITypeParser<IPartialMessage>),
+              typeof(ContextAwareMessageParser),
+              ServiceLifetime.Scoped
+       )
+);
 
 WebApplication app = builder.Build();
 
 app.AddInteractionEndpoint();
 
+await app.Services.GetRequiredService<SlashService>().UpdateSlashCommandsAsync();
+var db = app.Services.GetRequiredService<IDbContextFactory<BookmarkContext>>().CreateDbContext().Database;
+
+await db.MigrateAsync();
+db.EnsureCreated();
+
 app.Run();
+
