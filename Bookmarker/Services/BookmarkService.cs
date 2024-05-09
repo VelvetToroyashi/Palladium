@@ -1,4 +1,5 @@
 using Bookmarker.Data;
+using Humanizer;
 using Microsoft.EntityFrameworkCore;
 using Remora.Discord.API.Abstractions.Objects;
 using Remora.Rest.Core;
@@ -27,7 +28,7 @@ public class BookmarkService(IDbContextFactory<BookmarkContext> contextFactory)
         Snowflake userId,
         Snowflake? guildID,
         IReadOnlyList<string> tags,
-        IMessage bookmarkMessage
+        IPartialMessage bookmarkMessage
     )
     {
         await using BookmarkContext context = await contextFactory.CreateDbContextAsync();
@@ -37,18 +38,25 @@ public class BookmarkService(IDbContextFactory<BookmarkContext> contextFactory)
             Tags = [..tags],
             UserID = userId,
             GuildID = guildID,
-            Attachments = [..bookmarkMessage.Attachments.Select(x => x.Url)],
-            MessageID = bookmarkMessage.ID,
+            Attachments = [..bookmarkMessage.Attachments.OrDefault([]).Select(x => x.Url)],
+            MessageID = bookmarkMessage.ID.Value,
             CreatedAt = DateTimeOffset.UtcNow,
-            AuthorID = bookmarkMessage.Author.ID,
-            ChannelID = bookmarkMessage.ChannelID,
-            PartialContent = bookmarkMessage.Content,
+            AuthorID = bookmarkMessage.Author.Value.ID,
+            ChannelID = bookmarkMessage.ChannelID.Value,
+            PartialContent = bookmarkMessage.Content.Value.Truncate(45, "[...]"),
         };
-        
-        await context.Bookmarks.AddAsync(bookmark);
-        await context.SaveChangesAsync();
-        
-        return Results.Successful(bookmark);
+
+        try
+        {
+            await context.Bookmarks.AddAsync(bookmark);
+            await context.SaveChangesAsync();
+
+            return Results.Successful(bookmark);
+        }
+        catch(Exception e)
+        {
+            return e;
+        }
     }
     
     /// <summary>
