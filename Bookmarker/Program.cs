@@ -19,17 +19,16 @@ builder.Configuration
        .AddEnvironmentVariables()
        .AddJsonFile("config.json", optional: true);
 
-builder.Services.AddDiscordGateway(s => s.GetService<IConfiguration>()!["CLIENT_TOKEN"]!);
-
 builder.Services.AddHTTPInteractionAPIs();
+builder.Services.AddDiscordGateway(s => s.GetService<IConfiguration>()!["CLIENT_TOKEN"]!);
 
 builder.Services.AddDiscordCommands(true, false);
 
-builder.Services.AddDbContextFactory<BookmarkContext>();
 builder.Services.AddSingleton<BookmarkService>();
+builder.Services.AddDbContextFactory<BookmarkContext>();
 builder.Services.AddCommandTree().WithCommandGroup<BookmarkCommands>();
 
-builder.Services.AddScoped<MessageParser>();
+builder.Services.AddScoped<ITypeParser<IMessage>, MessageParser>();
 builder.Services.Replace
 (
        ServiceDescriptor.Describe
