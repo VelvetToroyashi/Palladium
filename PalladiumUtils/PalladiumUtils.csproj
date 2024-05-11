@@ -9,7 +9,7 @@
     <ItemGroup>
       <PackageReference Include="JetBrains.Annotations" Version="2023.3.0" />
       <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.4" />
-      <PackageReference Include="Remora.Discord.Commands" Version="28.0.4" />
+      <PackageReference Include="Remora.Discord.Commands" Version="29.0.2" />
       <PackageReference Include="Remora.Discord.Gateway" Version="12.0.2" />
       <PackageReference Include="VTP.Remora.Discord.HTTPInteractions" Version="1.0.3" />
       <FrameworkReference Include="Microsoft.AspNetCore.App" />
