@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using Remora.Discord.API.Abstractions.Gateway.Events;
 using Remora.Discord.API.Abstractions.Objects;
-using Remora.Discord.API.Objects;
 using Remora.Rest.Core;
 using Remora.Results;
 using RemoraHTTPInteractions.Services;
@@ -40,10 +40,12 @@ public static class EndpointExtensions
             {
                 return Results.Unauthorized();
             }
-
-            if (body.Contains("\"type\":1"))
+            
+            IInteractionCreate interactionDocument = JsonSerializer.Deserialize<IInteractionCreate>(body, json.Get("Discord"))!;
+            
+            if (interactionDocument.Type is InteractionType.Ping)
             {
-                return Results.Json(new InteractionResponse(InteractionCallbackType.Pong), json.Get("Discord"));
+                return Results.Ok("{\"type\":1}");
             }
 
             Result<(string, Optional<IReadOnlyDictionary<string, Stream>>)> result = await interactions.HandleInteractionAsync(body);
