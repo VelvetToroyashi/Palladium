@@ -25,7 +25,7 @@ builder.Services.AddHTTPInteractionAPIs();
 
 builder.Services.AddDiscordCommands(true, false);
 
-builder.Services.AddDbContextFactory<BookmarkContext>(o => o.UseSqlite("Data Source=./bookmarks.db"));
+builder.Services.AddDbContextFactory<BookmarkContext>();
 builder.Services.AddSingleton<BookmarkService>();
 builder.Services.AddCommandTree().WithCommandGroup<BookmarkCommands>();
 
