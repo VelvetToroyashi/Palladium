@@ -19,8 +19,8 @@ builder.Configuration
        .AddEnvironmentVariables()
        .AddJsonFile("config.json", optional: true);
 
-builder.Services.AddHTTPInteractionAPIs();
 builder.Services.AddDiscordGateway(s => s.GetService<IConfiguration>()!["CLIENT_TOKEN"]!);
+builder.Services.AddHTTPInteractionAPIs();
 
 builder.Services.AddDiscordCommands(true, false);
 
