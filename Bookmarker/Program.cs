@@ -9,6 +9,7 @@ using Remora.Commands.Parsers;
 using Remora.Discord.API.Abstractions.Objects;
 using Remora.Discord.Commands.Extensions;
 using Remora.Discord.Commands.Parsers;
+using Remora.Discord.Commands.Responders;
 using Remora.Discord.Commands.Services;
 using Remora.Discord.Gateway.Extensions;
 using RemoraHTTPInteractions.Extensions;
@@ -39,6 +40,7 @@ builder.Services.Replace
        )
 );
 
+builder.Services.Configure<InteractionResponderOptions>(o => o.SuppressAutomaticResponses = true);
 WebApplication app = builder.Build();
 
 app.AddInteractionEndpoint();
