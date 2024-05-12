@@ -1,13 +1,15 @@
 using Remora.Commands.Parsers;
+using Remora.Commands.Results;
+using Remora.Discord.API;
 using Remora.Discord.API.Abstractions.Objects;
 using Remora.Discord.Commands.Contexts;
-using Remora.Discord.Commands.Parsers;
+using Remora.Rest.Core;
 using Remora.Results;
 
 namespace PalladiumUtils;
 
 /// <summary>
-/// A stop-gap parser that fixes an issue in Remora regarding how multi-type parsers are handled.
+/// A stop-gap parser that fixes an issue in Remora regarding how multi-type parsers are handled. <br/>
 ///
 /// This parser specifically checks for the message in the context 
 /// </summary>
@@ -16,22 +18,32 @@ namespace PalladiumUtils;
 public class ContextAwareMessageParser
 (
     IOperationContext context, 
-    MessageParser fallback
+    ITypeParser<IMessage> fallback
 ) : AbstractTypeParser<IPartialMessage>
 {
-    public override ValueTask<Result<IPartialMessage>> TryParseAsync(string token, CancellationToken ct)
+    public async override ValueTask<Result<IPartialMessage>> TryParseAsync(string token, CancellationToken ct)
     {
-        // "Context-aware"; attempt to pull from the interaction, if available, and if it hasn't already been parsed
-        if (context is not InteractionContext { Interaction.Data: { HasValue: true, Value: { IsT0: true } data } })
+        if (!DiscordSnowflake.TryParse(token, out Snowflake? mid))
         {
-            return ((ITypeParser<IPartialMessage>)fallback).TryParseAsync(token, ct);
+            return new ParsingError<IPartialMessage>("Invalid snowflake");
+        }
+        
+        Snowflake messageID = mid.Value; 
+        
+        // "Context-aware"; attempt to pull from the interaction, if available, and if it hasn't already been parsed
+        if 
+        (
+            context is InteractionContext
+            {
+                Interaction.Data: { HasValue: true, Value.Value: IApplicationCommandData data }
+            } &&
+            data.Resolved.Value.Messages.Value.TryGetValue(messageID, out IPartialMessage? message)
+        )
+        {
+            return Result<IPartialMessage>.FromSuccess(message);
         }
 
-        var message = data.AsT0.Resolved.Value.Messages.Value.Values.First();
-
-        return message.ID.Value.ToString() != token ? 
-            ((ITypeParser<IPartialMessage>)fallback).TryParseAsync(token, ct) 
-            : ValueTask.FromResult(Result<IPartialMessage>.FromSuccess(message));
-
+        Result<IMessage> fallbackResult = await fallback.TryParseAsync(token, ct);
+        return fallbackResult.Map(parsed => (IPartialMessage) parsed);
     }
 }
