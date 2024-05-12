@@ -20,7 +20,7 @@ builder.Configuration
        .AddJsonFile("config.json", optional: true);
 
 builder.Services.AddDiscordGateway(s => s.GetService<IConfiguration>()!["CLIENT_TOKEN"]!);
-builder.Services.AddHTTPInteractionAPIs();
+builder.Services.AddHttpInteractions();
 
 builder.Services.AddDiscordCommands(true, false);
 
