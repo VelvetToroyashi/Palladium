@@ -10,6 +10,8 @@ namespace Bookmarker.Data;
 /// </summary>
 public class BookmarkEntity
 {
+    public int ID { get; set; }
+
     public Snowflake UserID { get; set; }
     
     public DateTimeOffset CreatedAt { get; set; }
@@ -33,6 +35,8 @@ file class BookmarkEntityConfiguration : IEntityTypeConfiguration<BookmarkEntity
     public void Configure(EntityTypeBuilder<BookmarkEntity> builder)
     {
         builder.HasKey(bookmark => new { bookmark.MessageID, bookmark.UserID });
+
+        builder.Property(bookmark => bookmark.ID).ValueGeneratedOnAdd();
     }
 }
 
