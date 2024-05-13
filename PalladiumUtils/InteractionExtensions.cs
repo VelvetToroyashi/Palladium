@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using Remora.Discord.API.Abstractions.Objects;
 using Remora.Discord.API.Abstractions.Rest;
+using Remora.Discord.API.Objects;
 using Remora.Discord.Commands.Contexts;
 using Remora.Rest.Core;
 using Remora.Results;
@@ -12,13 +13,31 @@ namespace PalladiumUtils;
 /// </summary>
 public static class InteractionExtensions
 {
-    public static async Task<Result<IMessage>> RespondAsync(this IDiscordRestInteractionAPI interactions, IInteractionContext context, string content, IReadOnlyList<IEmbed>? embeds = null, bool ephemeral = false)
+    public static async Task<Result<IMessage>> RespondAsync
+    (
+        this IDiscordRestInteractionAPI interactions, 
+        IInteractionContext context, 
+        string? content = null, 
+        IReadOnlyList<IEmbed>? embeds = null, 
+        IEnumerable<IEnumerable<IMessageComponent>>? components = null, 
+        bool ephemeral = false
+    )
     {
+        var componentsAsActionRows = components
+                                     .AsOptional()
+                                     .Map
+                                     (
+                                         c => (IReadOnlyList<IMessageComponent>)c.Select
+                                         (
+                                            cs => (IMessageComponent)new ActionRowComponent(cs.ToArray())
+                                         ).ToArray()
+                                     );
+        
         return await interactions.CreateFollowupMessageAsync
         (
             context.Interaction.ApplicationID,
             context.Interaction.Token,
-            content,
+            content.AsOptional(),
             embeds: embeds.AsOptional(),
             flags: (MessageFlags)(64 * Unsafe.BitCast<bool, int>(ephemeral))
         );
