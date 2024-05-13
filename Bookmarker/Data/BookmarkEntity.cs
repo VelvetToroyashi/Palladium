@@ -1,6 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.ValueGeneration;
 using Remora.Rest.Core;
 
 namespace Bookmarker.Data;
@@ -10,7 +14,7 @@ namespace Bookmarker.Data;
 /// </summary>
 public class BookmarkEntity
 {
-    public int ID { get; set; }
+    public string ID { get; set; }
 
     public Snowflake UserID { get; set; }
     
@@ -36,8 +40,21 @@ file class BookmarkEntityConfiguration : IEntityTypeConfiguration<BookmarkEntity
     {
         builder.HasKey(bookmark => new { bookmark.MessageID, bookmark.UserID });
 
-        builder.Property(bookmark => bookmark.ID).ValueGeneratedOnAdd();
+        builder.Property(bookmark => bookmark.ID)
+               .IsRequired()
+               .ValueGeneratedOnAdd()
+               .HasValueGenerator(typeof(BookmarkIdGenerator));
     }
+}
+
+file class BookmarkIdGenerator : ValueGenerator
+{
+    /// <inheritdoc />
+    public override bool GeneratesTemporaryValues => false;
+
+    /// <inheritdoc />
+    protected override object NextValue(EntityEntry entry)
+        => RandomNumberGenerator.GetHexString(5, true);
 }
 
 
