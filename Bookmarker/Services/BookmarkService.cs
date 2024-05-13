@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Bookmarker.Data;
 using Humanizer;
 using Microsoft.EntityFrameworkCore;
@@ -11,8 +12,11 @@ namespace Bookmarker.Services;
 /// A service to interact with bookmarks.
 /// </summary>
 /// <param name="contextFactory">A factory to create a new <see cref="BookmarkContext"/>.</param>
-public class BookmarkService(IDbContextFactory<BookmarkContext> contextFactory)
+public partial class BookmarkService(IDbContextFactory<BookmarkContext> contextFactory)
 {
+    [GeneratedRegex(@"(?<Link>https:\/\/(?:cdn|media)\.discordapp\.(?:com|net)\/attachments\/\d{17,20}\/\d{17,20}\/\S+\.(?:png|jpe?g|mp4|webm|webp))\b")]
+    private static partial Regex GetAttachmentRegex();
+    
     private const string BookmarkNotFoundError = "The bookmark you're looking for doesn't exist!";
     
     /// <summary>
@@ -33,17 +37,25 @@ public class BookmarkService(IDbContextFactory<BookmarkContext> contextFactory)
     {
         await using BookmarkContext context = await contextFactory.CreateDbContextAsync();
         
+        string partialContent = this.ExtractMessageContent(bookmarkMessage);
+        Regex attachmentRegex = GetAttachmentRegex();
+
+        var messageAttachments = bookmarkMessage
+                                 .Attachments
+                                 .OrDefault([])
+                                 .Select(x => attachmentRegex.Match(x.Url).Groups["Link"].Value);
+
         BookmarkEntity bookmark = new()
         {
             Tags = [..tags],
             UserID = userId,
             GuildID = guildID,
-            Attachments = [..bookmarkMessage.Attachments.OrDefault([]).Select(x => x.Url)],
+            Attachments = [..messageAttachments],
             MessageID = bookmarkMessage.ID.Value,
             CreatedAt = DateTimeOffset.UtcNow,
             AuthorID = bookmarkMessage.Author.Value.ID,
             ChannelID = bookmarkMessage.ChannelID.Value,
-            PartialContent = bookmarkMessage.Content.Value.Truncate(45, "[...]"),
+            PartialContent = partialContent,
         };
 
         try
@@ -58,7 +70,14 @@ public class BookmarkService(IDbContextFactory<BookmarkContext> contextFactory)
             return e;
         }
     }
-    
+
+    private string ExtractMessageContent(IPartialMessage bookmarkMessage)
+    {
+        var content = bookmarkMessage.Content.OrDefault();
+
+        return string.IsNullOrEmpty(content) ? "[Message does not contain content]" : content.Truncate(45, "[...]");
+    }
+
     /// <summary>
     /// Gets a bookmark by its ID.
     /// </summary>
