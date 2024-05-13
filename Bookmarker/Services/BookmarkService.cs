@@ -84,10 +84,10 @@ public partial class BookmarkService(IDbContextFactory<BookmarkContext> contextF
     /// <param name="id">The ID of the bookmark</param>
     /// <param name="userID">The ID of the user requesting the bookmark</param>
     /// <returns>The bookmark if it exists and the user has access to it.</returns>
-    public async ValueTask<Result<BookmarkEntity>> GetBookmarkAsync(int id, Snowflake userID)
+    public async ValueTask<Result<BookmarkEntity>> GetBookmarkAsync(string id, Snowflake userID)
     {
         await using BookmarkContext context = await contextFactory.CreateDbContextAsync();        
-        BookmarkEntity? bookmark = await context.Bookmarks.FindAsync(id);
+        BookmarkEntity? bookmark = await context.Bookmarks.FirstOrDefaultAsync(b => b.ID == id);
 
         return bookmark?.UserID == userID ? 
             Results.Successful(bookmark) : 
