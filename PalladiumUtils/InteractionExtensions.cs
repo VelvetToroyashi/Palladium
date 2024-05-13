@@ -39,7 +39,8 @@ public static class InteractionExtensions
             context.Interaction.Token,
             content.AsOptional(),
             embeds: embeds.AsOptional(),
-            flags: (MessageFlags)(64 * Unsafe.BitCast<bool, int>(ephemeral))
+            components: componentsAsActionRows,
+            flags: ephemeral ? MessageFlags.Ephemeral : default
         );
     }
     
