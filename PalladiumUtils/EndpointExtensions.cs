@@ -1,7 +1,9 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Remora.Discord.API.Abstractions.Gateway.Events;
 using Remora.Discord.API.Abstractions.Objects;
@@ -30,9 +32,12 @@ public static class EndpointExtensions
             HttpContext context,
             WebhookInteractionHelper interactions,
             IConfiguration config,
-            IOptionsMonitor<JsonSerializerOptions> json
+            IOptionsMonitor<JsonSerializerOptions> json,
+            [FromServices] ILoggerFactory logFactory
         ) =>
         {
+            ILogger logger = logFactory.CreateLogger("PalladiumUtils.InteractionEndpoint");
+            
             var hasHeaders = DiscordHeaders.TryExtractHeaders(context.Request.Headers, out var timestamp, out var signature);
             var body = await new StreamReader(context.Request.Body).ReadToEndAsync();
     
@@ -45,19 +50,22 @@ public static class EndpointExtensions
             
             if (interactionDocument.Type is InteractionType.Ping)
             {
+                logger.LogDebug("Received PING interaction from Discord");
                 return Results.Ok("{\"type\":1}");
             }
 
-            Result<(string, Optional<IReadOnlyDictionary<string, Stream>>)> result = await interactions.HandleInteractionAsync(body);
+            Result<(string, Optional<IReadOnlyDictionary<string, Stream>>)> result = await interactions.HandleInteractionAsync(interactionDocument);
 
             if (!result.IsDefined(out (string stringContent, Optional<IReadOnlyDictionary<string, Stream>> files) content))
             {
                 // Discord???
+                logger.LogWarning("Failed to get json data or attachments. This is likely indicative of a lack of handlers");
                 return Results.BadRequest();
             }
 
             if (!content.files.IsDefined())
             {
+                logger.LogTrace("Responding with JSON content");
                 return Results.Content(content.stringContent, "application/json");
             }
 
@@ -71,6 +79,7 @@ public static class EndpointExtensions
                 payload.Add(new StreamContent(file.Value), $"file{i}", file.Key);
             }
 
+            logger.LogTrace("Responding with multipart content");
             return Results.Ok(payload);
         });
     }
