@@ -168,7 +168,7 @@ public class BookmarkCommands
                options[i] = new SelectOption($"View Bookmark {bookmark.ID}", bookmark.ID);
           }
           
-          StringSelectComponent dropdown = new(CustomIDHelpers.CreateSelectMenuID("bookmarks"), options, "Select a bookmark", MaxValues: 1);
+          StringSelectComponent dropdown = new(CustomIDHelpers.CreateSelectMenuID("show_bookmark"), options, "Select a bookmark", MaxValues: 1);
 
           IEmbed embed = new Embed
           {
@@ -185,37 +185,43 @@ public class BookmarkCommands
 
 public class BookmarkComponentHandler(IDiscordRestInteractionAPI interactions, IInteractionContext context, BookmarkService bookmarks) : InteractionGroup
 {
-     [SelectMenu("bookmarks")]
+     [SelectMenu("show_bookmark")]
      public async Task<Result> ViewBookmarkAsync(IReadOnlyList<string> values)
      {
           string selected = values[0];
           _ = context.TryGetUserID(out Snowflake userID);
           
-          Result<BookmarkEntity> bookmark = await bookmarks.GetBookmarkAsync(selected, userID);
+          Result<BookmarkEntity> bookmarkResult = await bookmarks.GetBookmarkAsync(selected, userID);
           
-          if (!bookmark.IsSuccess)
+          if (!bookmarkResult.IsDefined(out BookmarkEntity? bookmark))
           {
-               return (Result)await interactions.RespondAsync(context, $"Failed to retrieve bookmark! \n {bookmark.Error}", ephemeral: true);
+               return (Result)await interactions.RespondAsync(context, $"Failed to retrieve bookmark! \n {bookmarkResult.Error}", ephemeral: true);
           }
           
-          int embedCount = bookmark.Entity.Attachments.Length > 1 ? bookmark.Entity.Attachments.Length : 1;
+          int embedCount = bookmark.Attachments.Length > 1 ? bookmark.Attachments.Length : 1;
           Embed[] embeds = new Embed[embedCount];
+
+          string bookmarkTagString = bookmark.Tags.Any() ? string.Join(", ", bookmark.Tags) : "None";
           
           // Create the first embed outside the loop
           Embed firstEmbed = new()
           {
-              Title = $"Bookmark {bookmark.Entity.ID}",
-              Description = $"""
-                             Message posted by <@{bookmark.Entity.AuthorID}> in <#{bookmark.Entity.ChannelID}> <t:{bookmark.Entity.CreatedAt.ToUnixTimeSeconds()}:R>:
-                             
-                             {bookmark.Entity.PartialContent}
-                             """,
+              Title = $"Bookmark {bookmarkResult.Entity.ID}",
+              Fields = (IEmbedField[])
+              [
+                new EmbedField("Tags", bookmarkTagString, true),
+                new EmbedField("Attachments", bookmark.Attachments.Length.ToString(), true),
+                new EmbedField("Bookmarked", $"<t:{bookmark.CreatedAt.ToUnixTimeSeconds()}:R>", true),
+                new EmbedField("Author", $"<@{bookmark.AuthorID}>"),
+                new EmbedField("Channel", $"<#{bookmark.ChannelID}>"),
+                new EmbedField("Content", bookmark.PartialContent!),
+              ],
               Colour = Color.LightBlue,
           };
 
-          if (bookmark.Entity.Attachments.Length >= 1)
+          if (bookmarkResult.Entity.Attachments.Length >= 1)
           {
-              firstEmbed = firstEmbed with { Image = new EmbedImage(bookmark.Entity.Attachments[0]) };
+              firstEmbed = firstEmbed with { Image = new EmbedImage(bookmarkResult.Entity.Attachments[0]) };
           }
 
           embeds[0] = firstEmbed;
@@ -225,15 +231,15 @@ public class BookmarkComponentHandler(IDiscordRestInteractionAPI interactions, I
           {
               embeds[i] = new Embed
               {
-                  Image = new EmbedImage(bookmark.Entity.Attachments[i]),
+                  Image = new EmbedImage(bookmarkResult.Entity.Attachments[i]),
                   Colour = Color.LightBlue,
               };
           }
           
           IMessageComponent[] components =
           [
-               new ButtonComponent(ButtonComponentStyle.Link, "Jump to message", URL: $"https://discord.com/channels/{bookmark.Entity.GuildID?.ToString() ?? "@me"}/{bookmark.Entity.ChannelID}/{bookmark.Entity.MessageID}"),
-               new ButtonComponent(ButtonComponentStyle.Danger, "Delete bookmark", CustomID: CustomIDHelpers.CreateButtonIDWithState("DeleteBookmark", bookmark.Entity.ID), IsDisabled: true),
+               new ButtonComponent(ButtonComponentStyle.Link, "Jump to message", URL: $"https://discord.com/channels/{bookmarkResult.Entity.GuildID?.ToString() ?? "@me"}/{bookmarkResult.Entity.ChannelID}/{bookmarkResult.Entity.MessageID}"),
+               new ButtonComponent(ButtonComponentStyle.Danger, "Delete bookmark", CustomID: CustomIDHelpers.CreateButtonIDWithState("delete_bookmark", bookmarkResult.Entity.ID), IsDisabled: true),
           ];
 
           Console.WriteLine(embeds.Length);
@@ -241,7 +247,7 @@ public class BookmarkComponentHandler(IDiscordRestInteractionAPI interactions, I
           return (Result)await interactions.RespondAsync(context, embeds: embeds, components: [components], ephemeral: true);
      }
      
-     [Button("DeleteBookmark")]
+     [Button("delete_bookmark")]
      public async Task<Result> DeleteBookmarkAsync(string state)
      {
          _ = context.TryGetUserID(out Snowflake userID);
