@@ -70,6 +70,20 @@ public partial class BookmarkService(IDbContextFactory<BookmarkContext> contextF
             return e;
         }
     }
+    
+    /// <summary>
+    /// Checks if a user has bookmarked a message.
+    /// </summary>
+    /// <param name="messageID">The ID of the message.</param>
+    /// <param name="userID">The ID of the user attempting to bookmark a message.</param>
+    /// <returns>Whether the user has already bookmarked the message.</returns>
+    public async Task<bool> HasMessagedBookmarkedAsync(Snowflake messageID, Snowflake userID)
+    {
+        await using BookmarkContext context = await contextFactory.CreateDbContextAsync();
+        
+        return await context.Bookmarks.AnyAsync(b => b.MessageID == messageID && b.UserID == userID);
+    }
+    
 
     private string ExtractMessageContent(IPartialMessage bookmarkMessage)
     {

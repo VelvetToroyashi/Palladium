@@ -12,6 +12,7 @@ using Remora.Discord.Commands.Parsers;
 using Remora.Discord.Commands.Responders;
 using Remora.Discord.Commands.Services;
 using Remora.Discord.Gateway.Extensions;
+using Remora.Discord.Interactivity.Extensions;
 using RemoraHTTPInteractions.Extensions;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -28,6 +29,7 @@ builder.Services.AddDiscordCommands(true, false);
 builder.Services.AddSingleton<BookmarkService>();
 builder.Services.AddDbContextFactory<BookmarkContext>();
 builder.Services.AddCommandTree().WithCommandGroup<BookmarkCommands>();
+builder.Services.AddInteractivity().AddInteractionGroup<BookmarkComponentHandler>();
 
 builder.Services.AddScoped<ITypeParser<IMessage>, MessageParser>();
 builder.Services.Replace
