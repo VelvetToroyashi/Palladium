@@ -50,13 +50,13 @@ public class BookmarkCommands
                                           This bookmark has {4} attachment(s).
                                           """;
 
-     private IReadOnlyList<IMessageComponent> initialNavButtons = new[]
-     {
+     internal static readonly IMessageComponent[] InitialNavButtons =
+     [
           new ButtonComponent(ButtonComponentStyle.Primary,   Label: "\u23ea", CustomID: "placeholder_0",                                         IsDisabled: true),
           new ButtonComponent(ButtonComponentStyle.Secondary, Label: "\u200B", CustomID: "placeholder_1",                                         IsDisabled: true),
-          new ButtonComponent(ButtonComponentStyle.Secondary, Label: "\u200B", CustomID: CustomIDHelpers.CreateButtonID("placeholder_2"),         IsDisabled: true),
+          new ButtonComponent(ButtonComponentStyle.Secondary, Label: "\u200B", CustomID: "placeholder_2",                                         IsDisabled: true),
           new ButtonComponent(ButtonComponentStyle.Primary,   Label: "\u23e9", CustomID: CustomIDHelpers.CreateButtonIDWithState("forward", "0"), IsDisabled: false),
-     };
+     ];
 
      [Command("Bookmark This!")]
      [CommandType(ApplicationCommandType.Message)]
