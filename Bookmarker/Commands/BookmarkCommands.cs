@@ -1,6 +1,6 @@
+using System.Diagnostics;
 using System.Drawing;
 using System.Security.Cryptography;
-using System.Text;
 using Bookmarker.Data;
 using Bookmarker.Services;
 using JetBrains.Annotations;
@@ -37,7 +37,7 @@ public class BookmarkCommands
                                               
                                               Try /help or Apps ➜ Bookmark This!
                                               """;
-     
+
      private const string NoBookmarksWithTagMessage = """
                                                       You don't have any bookmarks with the tag {0}!
                                                       
@@ -49,7 +49,15 @@ public class BookmarkCommands
                                           > {3}
                                           This bookmark has {4} attachment(s).
                                           """;
-     
+
+     private IReadOnlyList<IMessageComponent> initialNavButtons = new[]
+     {
+          new ButtonComponent(ButtonComponentStyle.Primary,   Label: "\u23ea", CustomID: "placeholder_0",                                         IsDisabled: true),
+          new ButtonComponent(ButtonComponentStyle.Secondary, Label: "\u200B", CustomID: "placeholder_1",                                         IsDisabled: true),
+          new ButtonComponent(ButtonComponentStyle.Secondary, Label: "\u200B", CustomID: CustomIDHelpers.CreateButtonID("placeholder_2"),         IsDisabled: true),
+          new ButtonComponent(ButtonComponentStyle.Primary,   Label: "\u23e9", CustomID: CustomIDHelpers.CreateButtonIDWithState("forward", "0"), IsDisabled: false),
+     };
+
      [Command("Bookmark This!")]
      [CommandType(ApplicationCommandType.Message)]
      [AllowedContexts(InteractionContextType.Guild, InteractionContextType.PrivateChannel)]
@@ -58,7 +66,7 @@ public class BookmarkCommands
      {
           Snowflake? guildID = context.Interaction.GuildID.AsNullable();
           Snowflake userID = context.Interaction.Member.Map(m => m.User.Value).OrDefault(() => context.Interaction.User.Value).ID;
-          
+
           Result<BookmarkEntity> bookmark = await bookmarks.CreateBookmarkAsync(userID, guildID, [], message);
 
           string content = bookmark.IsSuccess
@@ -80,10 +88,10 @@ public class BookmarkCommands
           {
                return (Result)await interactions.RespondAsync(context, "You've already bookmarked this message!", ephemeral: true);
           }
-          
+
           string state = RandomNumberGenerator.GetHexString(16, true);
           InMemoryDataStore<string, IPartialMessage>.Instance.TryAddValue(state, message);
-          
+
           InteractionModalCallbackData callbackData = new
           (
                CustomIDHelpers.CreateModalIDWithState("create_bookmark", state),
@@ -108,7 +116,7 @@ public class BookmarkCommands
                     )
                }
           );
-          
+
           return await interactions.CreateInteractionResponseAsync
           (
                context.Interaction.ID,
@@ -120,39 +128,53 @@ public class BookmarkCommands
                )
           );
      }
-     
+
      [Command("get_bookmarks")]
      [CommandType(ApplicationCommandType.ChatInput)]
      [AllowedContexts(InteractionContextType.Guild, InteractionContextType.PrivateChannel, InteractionContextType.BotDM)]
      [DiscordInstallContext(ApplicationIntegrationType.UserInstallable)]
      public async Task<Result> GetBookmarksAsync(string? tag = null)
      {
-          var contextCopy = context;
-          Snowflake userID = contextCopy.Interaction.Member.Map(m => m.User.Value).OrDefault(() => context.Interaction.User.Value).ID;
-          
+          Snowflake userID = context.Interaction.Member.Map(m => m.User.Value).OrDefault(() => context.Interaction.User.Value).ID;
+
           IReadOnlyList<BookmarkEntity> userBookmarks = await bookmarks.GetBookmarksAsync(userID);
-          
+
           if (userBookmarks.Count is 0)
           {
                return (Result)await interactions.RespondAsync(context, NoBookmarksMessage, ephemeral: true);
           }
 
-          int pageCount = userBookmarks.Count / 25 + 1;
+          CreateEmbedAndSelectComponent(0, userBookmarks, tag, out IReadOnlyList<IEmbed> embeds, out ISelectMenuComponent dropdown);
 
-          StringBuilder sb = new();
-          ISelectOption[] options = new ISelectOption[Math.Min(userBookmarks.Count, 25)];
+          IReadOnlyList<IReadOnlyList<IMessageComponent>> sentComponents = [[dropdown]];
 
-          IReadOnlyList<IMessageComponent> navButtons = new[]
+          if (userBookmarks.Count > 25)
           {
-               new ButtonComponent(ButtonComponentStyle.Primary,   Label: "\u23ea", CustomID: CustomIDHelpers.CreateButtonID("back"),          IsDisabled: pageCount is 1),
-               new ButtonComponent(ButtonComponentStyle.Secondary, Label: "\u200B", CustomID: CustomIDHelpers.CreateButtonID("placeholder_1"), IsDisabled: true),
-               new ButtonComponent(ButtonComponentStyle.Secondary, Label: "\u200B", CustomID: CustomIDHelpers.CreateButtonID("placeholder_2"), IsDisabled: true),
-               new ButtonComponent(ButtonComponentStyle.Primary,   Label: "\u23e9", CustomID: CustomIDHelpers.CreateButtonID("forward"),       IsDisabled: pageCount is 1),
-          };
+               sentComponents = [[dropdown], this.initialNavButtons];
+          }
 
-          for (var i = 0; i < userBookmarks.Take(25).ToArray().Length; i++)
+          return (Result)await interactions.RespondAsync(context, embeds: embeds, components: sentComponents, ephemeral: true);
+     }
+
+     internal static void CreateEmbedAndSelectComponent
+     (
+          int page,
+          IReadOnlyList<BookmarkEntity> bookmarks,
+          string? tag,
+          out IReadOnlyList<IEmbed> embeds,
+          out ISelectMenuComponent selectMenu
+     )
+     {
+          BookmarkEntity[] bookmarkSlice = bookmarks.Skip(page * 25).Take(25).ToArray();
+
+          Debug.Assert(bookmarkSlice.Length > 0);
+
+          Embed[] embedArray = new Embed[bookmarkSlice.Length];
+          ISelectOption[] options = new ISelectOption[bookmarkSlice.Length];
+
+          for (var i = 0; i < bookmarkSlice.Length; i++)
           {
-               BookmarkEntity bookmark = userBookmarks.Take(25).ToArray()[i];
+               BookmarkEntity bookmark = bookmarkSlice[i];
 
                var content = string.Format
                (
@@ -164,22 +186,25 @@ public class BookmarkCommands
                     bookmark.Attachments.Length
                );
 
-               sb.AppendLine(content);
+               embedArray[i] = new Embed
+               {
+                    Title = tag is null ? "Your bookmarks" : $"Your bookmarks with the tag ``{tag}``",
+                    Description = content,
+                    Colour = tag is null ? Color.PaleGreen : Color.LightBlue,
+                    Footer = new EmbedFooter($"Page {page + 1}"),
+               };
+
                options[i] = new SelectOption($"View Bookmark {bookmark.ID}", bookmark.ID);
           }
-          
-          StringSelectComponent dropdown = new(CustomIDHelpers.CreateSelectMenuID("show_bookmark"), options, "Select a bookmark", MaxValues: 1);
 
-          IEmbed embed = new Embed
-          {
-               Title = tag is null ? "Your bookmarks" : $"Your bookmarks with the tag {tag}",
-               Description = sb.ToString(),
-               Colour = tag is null ? Color.PaleGreen : Color.LightBlue,
-               Footer = pageCount > 1 ? new EmbedFooter($"Page 1 of {pageCount}") : default(Optional<IEmbedFooter>),
-          };
-          
-          IReadOnlyList<IReadOnlyList<IMessageComponent>> sentComponents = pageCount is 1 ? [[dropdown]] : [[dropdown], navButtons];
-          return (Result)await interactions.RespondAsync(context, embeds: [embed],  components: sentComponents,  ephemeral: true);
+          embeds = embedArray;
+          selectMenu = new StringSelectComponent
+          (
+               CustomIDHelpers.CreateSelectMenuID("show_bookmark"),
+               options,
+               "Select a bookmark",
+               MaxValues: 1
+          );
      }
 }
 
@@ -190,19 +215,19 @@ public class BookmarkComponentHandler(IDiscordRestInteractionAPI interactions, I
      {
           string selected = values[0];
           _ = context.TryGetUserID(out Snowflake userID);
-          
+
           Result<BookmarkEntity> bookmarkResult = await bookmarks.GetBookmarkAsync(selected, userID);
-          
+
           if (!bookmarkResult.IsDefined(out BookmarkEntity? bookmark))
           {
                return (Result)await interactions.RespondAsync(context, $"Failed to retrieve bookmark! \n {bookmarkResult.Error}", ephemeral: true);
           }
-          
+
           int embedCount = bookmark.Attachments.Length > 1 ? bookmark.Attachments.Length : 1;
           Embed[] embeds = new Embed[embedCount];
 
           string bookmarkTagString = bookmark.Tags.Any() ? string.Join(", ", bookmark.Tags) : "None";
-          
+
           // Create the first embed outside the loop
           Embed firstEmbed = new()
           {
@@ -235,18 +260,18 @@ public class BookmarkComponentHandler(IDiscordRestInteractionAPI interactions, I
                   Colour = Color.LightBlue,
               };
           }
-          
+
           IMessageComponent[] components =
           [
                new ButtonComponent(ButtonComponentStyle.Link, "Jump to message", URL: $"https://discord.com/channels/{bookmarkResult.Entity.GuildID?.ToString() ?? "@me"}/{bookmarkResult.Entity.ChannelID}/{bookmarkResult.Entity.MessageID}"),
-               new ButtonComponent(ButtonComponentStyle.Danger, "Delete bookmark", CustomID: CustomIDHelpers.CreateButtonIDWithState("delete_bookmark", bookmarkResult.Entity.ID), IsDisabled: true),
+               new ButtonComponent(ButtonComponentStyle.Danger, "Delete bookmark", CustomID: CustomIDHelpers.CreateButtonIDWithState("delete_bookmark", bookmarkResult.Entity.ID)),
           ];
 
           Console.WriteLine(embeds.Length);
 
           return (Result)await interactions.RespondAsync(context, embeds: embeds, components: [components], ephemeral: true);
      }
-     
+
      [Button("delete_bookmark")]
      public async Task<Result> DeleteBookmarkAsync(string state)
      {
@@ -266,12 +291,12 @@ public class BookmarkComponentHandler(IDiscordRestInteractionAPI interactions, I
      public async Task<Result> CreateBookmarkModalAsync(string tags, string state)
      {
           await interactions.CreateInteractionResponseAsync(context.Interaction.ID, context.Interaction.Token, new InteractionResponse(InteractionCallbackType.DeferredUpdateMessage));
-          
+
           Snowflake? guildID = context.Interaction.GuildID.AsNullable();
           Snowflake userID = context.Interaction.Member.Map(m => m.User.Value).OrDefault(() => context.Interaction.User.Value).ID;
 
           Result<DataLease<string, IPartialMessage>> leaseResult = await InMemoryDataStore<string, IPartialMessage>.Instance.TryGetLeaseAsync(state);
-          
+
           if (!leaseResult.IsDefined(out var originalMessageResult))
           {
                return (Result)await interactions.RespondAsync(context, "Failed to retrieve original message!", ephemeral: true);
@@ -288,5 +313,5 @@ public class BookmarkComponentHandler(IDiscordRestInteractionAPI interactions, I
 
           return (Result)await interactions.RespondAsync(context, content, ephemeral: true);
      }
-     
+
 }
