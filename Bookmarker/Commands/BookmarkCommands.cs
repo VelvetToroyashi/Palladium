@@ -315,4 +315,77 @@ public class BookmarkComponentHandler(IDiscordRestInteractionAPI interactions, I
           return (Result)await interactions.RespondAsync(context, content, ephemeral: true);
      }
 
+     [Button("forward")]
+     public async Task<Result> PaginateForward(int state)
+     {
+          _ = context.TryGetUserID(out Snowflake userID);
+
+          await interactions.CreateInteractionResponseAsync
+          (
+               context.Interaction.ID,
+               context.Interaction.Token,
+               new InteractionResponse(InteractionCallbackType.DeferredUpdateMessage)
+          );
+
+          IReadOnlyList<BookmarkEntity> bookmarksResult = await bookmarks.GetBookmarksAsync(userID);
+
+          BookmarkCommands.CreateEmbedAndSelectComponent(state + 1, bookmarksResult, null, out IEmbed embed, out ISelectMenuComponent selectMenu);
+
+          // State is the current page number; we know there's one more page,
+          // so we look ahead by two pages to see if we should disable the forward button *now*.
+          bool hasFuturePages = bookmarksResult.Count / 25 + 1 > state + 2;
+
+          IMessageComponent[] updatedNavButtons =
+          [
+               (BookmarkCommands.InitialNavButtons[0] as ButtonComponent)! with { IsDisabled = false, CustomID = CustomIDHelpers.CreateButtonIDWithState("backward", $"{state}")},
+               ..BookmarkCommands.InitialNavButtons[1..1],
+               (BookmarkCommands.InitialNavButtons[2] as ButtonComponent)! with { IsDisabled = !hasFuturePages, CustomID = CustomIDHelpers.CreateButtonIDWithState("forward", $"{state + 1}")},
+          ];
+
+          IMessageComponent[] wrappedComponents = [new ActionRowComponent([selectMenu]), new ActionRowComponent(updatedNavButtons)];
+
+          return (Result)await interactions.EditOriginalInteractionResponseAsync
+          (
+               context.Interaction.ID,
+               context.Interaction.Token,
+               embeds: (IEmbed[])[embed],
+               components: wrappedComponents
+          );
+     }
+
+     [Button("backward")]
+     public async Task<Result> PaginateBackward(int state)
+     {
+          _ = context.TryGetUserID(out Snowflake userID);
+
+          await interactions.CreateInteractionResponseAsync
+          (
+               context.Interaction.ID,
+               context.Interaction.Token,
+               new InteractionResponse(InteractionCallbackType.DeferredUpdateMessage)
+          );
+
+          IReadOnlyList<BookmarkEntity> bookmarksResult = await bookmarks.GetBookmarksAsync(userID);
+
+          BookmarkCommands.CreateEmbedAndSelectComponent(state - 1, bookmarksResult, null, out IEmbed embed, out ISelectMenuComponent selectMenu);
+
+          // This is the backward button, so we know there's going to be a future page.
+          IMessageComponent[] updatedNavButtons =
+          [
+               (BookmarkCommands.InitialNavButtons[0] as ButtonComponent)! with { IsDisabled = state == 0, CustomID = CustomIDHelpers.CreateButtonIDWithState("backward", $"{state - 1}")},
+               ..BookmarkCommands.InitialNavButtons[1..1],
+               (BookmarkCommands.InitialNavButtons[2] as ButtonComponent)! with { IsDisabled = false, CustomID = CustomIDHelpers.CreateButtonIDWithState("forward", $"{state}")},
+          ];
+
+          IMessageComponent[] wrappedComponents = [new ActionRowComponent([selectMenu]), new ActionRowComponent(updatedNavButtons)];
+
+          return (Result)await interactions.EditOriginalInteractionResponseAsync
+          (
+               context.Interaction.ID,
+               context.Interaction.Token,
+               embeds: (IEmbed[])[embed],
+               components: wrappedComponents
+          );
+     }
+
 }
