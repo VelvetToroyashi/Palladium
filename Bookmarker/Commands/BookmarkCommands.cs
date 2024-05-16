@@ -281,7 +281,7 @@ public class BookmarkComponentHandler(IDiscordRestInteractionAPI interactions, I
      {
          _ = context.TryGetUserID(out Snowflake userID);
 
-         Result result = await bookmarks.DeleteBookmarkAsync(int.Parse(state), userID);
+         Result result = await bookmarks.DeleteBookmarkAsync(state, userID);
 
          string content = result.IsSuccess
              ? "Bookmark deleted successfully!"

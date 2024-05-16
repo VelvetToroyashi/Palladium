@@ -16,9 +16,9 @@ public partial class BookmarkService(IDbContextFactory<BookmarkContext> contextF
 {
     [GeneratedRegex(@"(?<Link>https:\/\/(?:cdn|media)\.discordapp\.(?:com|net)\/attachments\/\d{17,20}\/\d{17,20}\/\S+\.(?:png|jpe?g|mp4|webm|webp))\b")]
     private static partial Regex GetAttachmentRegex();
-    
+
     private const string BookmarkNotFoundError = "The bookmark you're looking for doesn't exist!";
-    
+
     /// <summary>
     /// Creates a new bookmark.
     /// </summary>
@@ -36,7 +36,7 @@ public partial class BookmarkService(IDbContextFactory<BookmarkContext> contextF
     )
     {
         await using BookmarkContext context = await contextFactory.CreateDbContextAsync();
-        
+
         string partialContent = this.ExtractMessageContent(bookmarkMessage);
         Regex attachmentRegex = GetAttachmentRegex();
 
@@ -70,7 +70,7 @@ public partial class BookmarkService(IDbContextFactory<BookmarkContext> contextF
             return e;
         }
     }
-    
+
     /// <summary>
     /// Checks if a user has bookmarked a message.
     /// </summary>
@@ -80,10 +80,10 @@ public partial class BookmarkService(IDbContextFactory<BookmarkContext> contextF
     public async Task<bool> HasMessagedBookmarkedAsync(Snowflake messageID, Snowflake userID)
     {
         await using BookmarkContext context = await contextFactory.CreateDbContextAsync();
-        
+
         return await context.Bookmarks.AnyAsync(b => b.MessageID == messageID && b.UserID == userID);
     }
-    
+
 
     private string ExtractMessageContent(IPartialMessage bookmarkMessage)
     {
@@ -100,14 +100,14 @@ public partial class BookmarkService(IDbContextFactory<BookmarkContext> contextF
     /// <returns>The bookmark if it exists and the user has access to it.</returns>
     public async ValueTask<Result<BookmarkEntity>> GetBookmarkAsync(string id, Snowflake userID)
     {
-        await using BookmarkContext context = await contextFactory.CreateDbContextAsync();        
+        await using BookmarkContext context = await contextFactory.CreateDbContextAsync();
         BookmarkEntity? bookmark = await context.Bookmarks.FirstOrDefaultAsync(b => b.ID == id);
 
-        return bookmark?.UserID == userID ? 
-            Results.Successful(bookmark) : 
+        return bookmark?.UserID == userID ?
+            Results.Successful(bookmark) :
             Results.NotFound(BookmarkNotFoundError, bookmark);
     }
-    
+
     /// <summary>
     /// Gets all bookmarks for a user.
     /// </summary>
@@ -116,34 +116,34 @@ public partial class BookmarkService(IDbContextFactory<BookmarkContext> contextF
     public async ValueTask<IReadOnlyList<BookmarkEntity>> GetBookmarksAsync(Snowflake userID)
     {
         await using BookmarkContext context = await contextFactory.CreateDbContextAsync();
-        
+
         IReadOnlyList<BookmarkEntity> bookmarks = await context.Bookmarks
             .Where(x => x.UserID == userID)
             .ToListAsync();
-        
+
         return bookmarks;
     }
-    
+
     /// <summary>
     /// Deletes a bookmark by its ID.
     /// </summary>
     /// <param name="id">The ID of the bookmark to delete.</param>
     /// <param name="userID">The ID of the user deleting the bookmark.</param>
     /// <returns></returns>
-    public async ValueTask<Result> DeleteBookmarkAsync(int id, Snowflake userID)
+    public async ValueTask<Result> DeleteBookmarkAsync(string id, Snowflake userID)
     {
         await using BookmarkContext context = await contextFactory.CreateDbContextAsync();
-        
-        BookmarkEntity? bookmark = await context.Bookmarks.FindAsync(id);
-        
+
+        BookmarkEntity? bookmark = await context.Bookmarks.FirstOrDefaultAsync(b => b.ID == id);
+
         if (bookmark?.UserID != userID)
         {
             return Results.NotFound(BookmarkNotFoundError);
         }
-        
+
         context.Bookmarks.Remove(bookmark);
         await context.SaveChangesAsync();
-        
+
         return Result.Success;
     }
 }
