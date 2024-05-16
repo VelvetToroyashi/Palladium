@@ -49,16 +49,17 @@ public class BookmarkCommands
                                           **{0}.** <@{1}> in <#{2}>:
                                           > {3}
                                           This bookmark has {4} attachment(s).
+
                                           """;
 
-     public const int MaxBookmarksPerPage = 15;
+     public const int MaxBookmarksPerPage = 12;
 
      internal static readonly IMessageComponent[] InitialNavButtons =
      [
           new ButtonComponent(ButtonComponentStyle.Primary,   Label: "\u23ea", CustomID: "placeholder_0",                                         IsDisabled: true),
           new ButtonComponent(ButtonComponentStyle.Secondary, Label: "\u200B", CustomID: "placeholder_1",                                         IsDisabled: true),
           new ButtonComponent(ButtonComponentStyle.Secondary, Label: "\u200B", CustomID: "placeholder_2",                                         IsDisabled: true),
-          new ButtonComponent(ButtonComponentStyle.Primary,   Label: "\u23e9", CustomID: CustomIDHelpers.CreateButtonIDWithState("forward", "0"), IsDisabled: false),
+          new ButtonComponent(ButtonComponentStyle.Primary,   Label: "\u23e9", CustomID: CustomIDHelpers.CreateButtonIDWithState("forward", "2"), IsDisabled: false),
      ];
 
      [Command("Bookmark This!")]
@@ -147,7 +148,7 @@ public class BookmarkCommands
                return (Result)await interactions.RespondAsync(context, NoBookmarksMessage, ephemeral: true);
           }
 
-          CreateEmbedAndSelectComponent(0, userBookmarks, tag, out IEmbed embed, out ISelectMenuComponent dropdown);
+          CreateEmbedAndSelectComponent(1, userBookmarks, tag, out IEmbed embed, out ISelectMenuComponent dropdown);
 
           IReadOnlyList<IReadOnlyList<IMessageComponent>> sentComponents = [[dropdown]];
 
@@ -169,7 +170,7 @@ public class BookmarkCommands
      )
      {
           StringBuilder sb = new();
-          BookmarkEntity[] bookmarkSlice = bookmarks.Skip(page * MaxBookmarksPerPage).Take(MaxBookmarksPerPage).ToArray();
+          BookmarkEntity[] bookmarkSlice = bookmarks.Skip(MaxBookmarksPerPage * (page - 1)).Take(MaxBookmarksPerPage).ToArray();
 
           Debug.Assert(bookmarkSlice.Length > 0);
           ISelectOption[] options = new ISelectOption[bookmarkSlice.Length];
@@ -198,7 +199,7 @@ public class BookmarkCommands
                Title = tag is null ? "Your bookmarks" : $"Your bookmarks with the tag ``{tag}``",
                Description = sb.ToString(),
                Colour = tag is null ? Color.PaleGreen : Color.LightBlue,
-               Footer = new EmbedFooter($"Page {page + 1}"),
+               Footer = new EmbedFooter($"Page {page} of {bookmarks.Count / MaxBookmarksPerPage + 1}"),
           };
 
           selectMenu = new StringSelectComponent
@@ -331,17 +332,15 @@ public class BookmarkComponentHandler(IDiscordRestInteractionAPI interactions, I
 
           IReadOnlyList<BookmarkEntity> bookmarksResult = await bookmarks.GetBookmarksAsync(userID);
 
-          BookmarkCommands.CreateEmbedAndSelectComponent(state + 1, bookmarksResult, null, out IEmbed embed, out ISelectMenuComponent selectMenu);
+          BookmarkCommands.CreateEmbedAndSelectComponent(state, bookmarksResult, null, out IEmbed embed, out ISelectMenuComponent selectMenu);
 
-          // State is the current page number; we know there's one more page,
-          // so we look ahead by two pages to see if we should disable the forward button *now*.
-          bool hasFuturePages = bookmarksResult.Count / BookmarkCommands.MaxBookmarksPerPage + 1 > state + 2;
+          bool hasFuturePages = bookmarksResult.Count / BookmarkCommands.MaxBookmarksPerPage + 1 > state + 1;
 
           IMessageComponent[] updatedNavButtons =
           [
-               (BookmarkCommands.InitialNavButtons[0] as ButtonComponent)! with { IsDisabled = false, CustomID = CustomIDHelpers.CreateButtonIDWithState("backward", $"{state}")},
-               ..BookmarkCommands.InitialNavButtons[1..1],
-               (BookmarkCommands.InitialNavButtons[2] as ButtonComponent)! with { IsDisabled = !hasFuturePages, CustomID = CustomIDHelpers.CreateButtonIDWithState("forward", $"{state + 1}")},
+               (BookmarkCommands.InitialNavButtons[0] as ButtonComponent)! with { IsDisabled = false, CustomID = CustomIDHelpers.CreateButtonIDWithState("backward", $"{state - 1}")},
+               ..BookmarkCommands.InitialNavButtons[1..^1],
+               (BookmarkCommands.InitialNavButtons[3] as ButtonComponent)! with { IsDisabled = !hasFuturePages, CustomID = CustomIDHelpers.CreateButtonIDWithState("forward", $"{state + 1}")},
           ];
 
           IMessageComponent[] wrappedComponents = [new ActionRowComponent([selectMenu]), new ActionRowComponent(updatedNavButtons)];
@@ -369,14 +368,14 @@ public class BookmarkComponentHandler(IDiscordRestInteractionAPI interactions, I
 
           IReadOnlyList<BookmarkEntity> bookmarksResult = await bookmarks.GetBookmarksAsync(userID);
 
-          BookmarkCommands.CreateEmbedAndSelectComponent(state - 1, bookmarksResult, null, out IEmbed embed, out ISelectMenuComponent selectMenu);
+          BookmarkCommands.CreateEmbedAndSelectComponent(state, bookmarksResult, null, out IEmbed embed, out ISelectMenuComponent selectMenu);
 
           // This is the backward button, so we know there's going to be a future page.
           IMessageComponent[] updatedNavButtons =
           [
-               (BookmarkCommands.InitialNavButtons[0] as ButtonComponent)! with { IsDisabled = state == 0, CustomID = CustomIDHelpers.CreateButtonIDWithState("backward", $"{state - 1}")},
-               ..BookmarkCommands.InitialNavButtons[1..1],
-               (BookmarkCommands.InitialNavButtons[2] as ButtonComponent)! with { IsDisabled = false, CustomID = CustomIDHelpers.CreateButtonIDWithState("forward", $"{state}")},
+               (BookmarkCommands.InitialNavButtons[0] as ButtonComponent)! with { IsDisabled = state is 1, CustomID = CustomIDHelpers.CreateButtonIDWithState("backward", $"{state - 1}")},
+               ..BookmarkCommands.InitialNavButtons[1..^1],
+               (BookmarkCommands.InitialNavButtons[3] as ButtonComponent)! with { IsDisabled = false, CustomID = CustomIDHelpers.CreateButtonIDWithState("forward", $"{state + 1}")},
           ];
 
           IMessageComponent[] wrappedComponents = [new ActionRowComponent([selectMenu]), new ActionRowComponent(updatedNavButtons)];
