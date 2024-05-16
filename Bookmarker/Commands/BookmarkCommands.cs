@@ -51,6 +51,8 @@ public class BookmarkCommands
                                           This bookmark has {4} attachment(s).
                                           """;
 
+     public const int MaxBookmarksPerPage = 15;
+
      internal static readonly IMessageComponent[] InitialNavButtons =
      [
           new ButtonComponent(ButtonComponentStyle.Primary,   Label: "\u23ea", CustomID: "placeholder_0",                                         IsDisabled: true),
@@ -149,7 +151,7 @@ public class BookmarkCommands
 
           IReadOnlyList<IReadOnlyList<IMessageComponent>> sentComponents = [[dropdown]];
 
-          if (userBookmarks.Count > 25)
+          if (userBookmarks.Count > MaxBookmarksPerPage)
           {
                sentComponents = [[dropdown], InitialNavButtons];
           }
@@ -167,7 +169,7 @@ public class BookmarkCommands
      )
      {
           StringBuilder sb = new();
-          BookmarkEntity[] bookmarkSlice = bookmarks.Skip(page * 25).Take(25).ToArray();
+          BookmarkEntity[] bookmarkSlice = bookmarks.Skip(page * MaxBookmarksPerPage).Take(MaxBookmarksPerPage).ToArray();
 
           Debug.Assert(bookmarkSlice.Length > 0);
           ISelectOption[] options = new ISelectOption[bookmarkSlice.Length];
@@ -333,7 +335,7 @@ public class BookmarkComponentHandler(IDiscordRestInteractionAPI interactions, I
 
           // State is the current page number; we know there's one more page,
           // so we look ahead by two pages to see if we should disable the forward button *now*.
-          bool hasFuturePages = bookmarksResult.Count / 25 + 1 > state + 2;
+          bool hasFuturePages = bookmarksResult.Count / BookmarkCommands.MaxBookmarksPerPage + 1 > state + 2;
 
           IMessageComponent[] updatedNavButtons =
           [
@@ -346,7 +348,7 @@ public class BookmarkComponentHandler(IDiscordRestInteractionAPI interactions, I
 
           return (Result)await interactions.EditOriginalInteractionResponseAsync
           (
-               context.Interaction.ID,
+               context.Interaction.ApplicationID,
                context.Interaction.Token,
                embeds: (IEmbed[])[embed],
                components: wrappedComponents
@@ -381,7 +383,7 @@ public class BookmarkComponentHandler(IDiscordRestInteractionAPI interactions, I
 
           return (Result)await interactions.EditOriginalInteractionResponseAsync
           (
-               context.Interaction.ID,
+               context.Interaction.ApplicationID,
                context.Interaction.Token,
                embeds: (IEmbed[])[embed],
                components: wrappedComponents
