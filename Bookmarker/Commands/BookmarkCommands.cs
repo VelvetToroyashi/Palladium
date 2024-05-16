@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Drawing;
 using System.Security.Cryptography;
+using System.Text;
 using Bookmarker.Data;
 using Bookmarker.Services;
 using JetBrains.Annotations;
@@ -144,16 +145,16 @@ public class BookmarkCommands
                return (Result)await interactions.RespondAsync(context, NoBookmarksMessage, ephemeral: true);
           }
 
-          CreateEmbedAndSelectComponent(0, userBookmarks, tag, out IReadOnlyList<IEmbed> embeds, out ISelectMenuComponent dropdown);
+          CreateEmbedAndSelectComponent(0, userBookmarks, tag, out IEmbed embed, out ISelectMenuComponent dropdown);
 
           IReadOnlyList<IReadOnlyList<IMessageComponent>> sentComponents = [[dropdown]];
 
           if (userBookmarks.Count > 25)
           {
-               sentComponents = [[dropdown], this.initialNavButtons];
+               sentComponents = [[dropdown], InitialNavButtons];
           }
 
-          return (Result)await interactions.RespondAsync(context, embeds: embeds, components: sentComponents, ephemeral: true);
+          return (Result)await interactions.RespondAsync(context, embeds: [embed], components: sentComponents, ephemeral: true);
      }
 
      internal static void CreateEmbedAndSelectComponent
@@ -161,15 +162,14 @@ public class BookmarkCommands
           int page,
           IReadOnlyList<BookmarkEntity> bookmarks,
           string? tag,
-          out IReadOnlyList<IEmbed> embeds,
+          out IEmbed embed,
           out ISelectMenuComponent selectMenu
      )
      {
+          StringBuilder sb = new();
           BookmarkEntity[] bookmarkSlice = bookmarks.Skip(page * 25).Take(25).ToArray();
 
           Debug.Assert(bookmarkSlice.Length > 0);
-
-          Embed[] embedArray = new Embed[bookmarkSlice.Length];
           ISelectOption[] options = new ISelectOption[bookmarkSlice.Length];
 
           for (var i = 0; i < bookmarkSlice.Length; i++)
@@ -186,18 +186,19 @@ public class BookmarkCommands
                     bookmark.Attachments.Length
                );
 
-               embedArray[i] = new Embed
-               {
-                    Title = tag is null ? "Your bookmarks" : $"Your bookmarks with the tag ``{tag}``",
-                    Description = content,
-                    Colour = tag is null ? Color.PaleGreen : Color.LightBlue,
-                    Footer = new EmbedFooter($"Page {page + 1}"),
-               };
+               sb.AppendLine(content);
 
                options[i] = new SelectOption($"View Bookmark {bookmark.ID}", bookmark.ID);
           }
 
-          embeds = embedArray;
+          embed = new Embed
+          {
+               Title = tag is null ? "Your bookmarks" : $"Your bookmarks with the tag ``{tag}``",
+               Description = sb.ToString(),
+               Colour = tag is null ? Color.PaleGreen : Color.LightBlue,
+               Footer = new EmbedFooter($"Page {page + 1}"),
+          };
+
           selectMenu = new StringSelectComponent
           (
                CustomIDHelpers.CreateSelectMenuID("show_bookmark"),
