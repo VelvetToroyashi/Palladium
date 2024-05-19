@@ -318,6 +318,7 @@ public class BookmarkComponentHandler(IDiscordRestInteractionAPI interactions, I
      }
 
      [Button("delete_bookmark")]
+     [SuppressInteractionResponse(true)]
      public async Task<Result> DeleteBookmarkAsync(string state)
      {
          _ = context.TryGetUserID(out Snowflake userID);
