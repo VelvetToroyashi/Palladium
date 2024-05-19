@@ -188,10 +188,10 @@ public class BookmarkCommands
           You can view your bookmarks by using the </bookmark_list:{bookmarkListCommandID}>!
 
           If you'd like to share the bot with your friends, you can use the </invite:{inviteCommandID}> command.
-          Alternatively, pass this invite link: https://bookmarker.toroyashi.me/invite
+          Alternatively, pass this invite link: <https://bookmarker.toroyashi.me/invite>
 
-          If you've encountered a bug with the bot, or have any suggestions, please [open an issue on GitHub]({githubLink}).
-          Alternatively, join the [support server]({supportServerLink}).
+          If you've encountered a bug with the bot, or have any suggestions, please [open an issue on GitHub](<{githubLink}>).
+          Alternatively, join the [support server](<{supportServerLink}>).
           """;
 
           ButtonComponent[] links =
