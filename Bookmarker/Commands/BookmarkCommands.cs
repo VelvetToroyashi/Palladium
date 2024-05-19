@@ -328,7 +328,22 @@ public class BookmarkComponentHandler(IDiscordRestInteractionAPI interactions, I
              ? "Bookmark deleted successfully!"
              : "Failed to delete bookmark!";
 
-         return (Result)await interactions.RespondAsync(context, content, ephemeral: true);
+        return await interactions.CreateInteractionResponseAsync
+        (
+             context.Interaction.ID,
+             context.Interaction.Token,
+             new InteractionResponse
+             (
+                  InteractionCallbackType.UpdateMessage,
+                  new(new InteractionMessageCallbackData
+                  (
+                       Content: content,
+                       Embeds: (IEmbed[])[],
+                       Components: (IMessageComponent[])[],
+                       Flags: MessageFlags.Ephemeral
+                  ))
+             )
+        );
      }
 
      [Modal("create_bookmark")]
