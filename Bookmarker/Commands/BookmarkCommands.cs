@@ -185,7 +185,7 @@ public class BookmarkCommands
           The basic command will bookmark the message you clicked on, while the advanced command
           will prompt you for a *tag* to add to the bookmark. Tags are useful for organizing your bookmarks.
 
-          You can view your bookmarks by using the </bookmark_list:{bookmarkListCommandID}>!
+          You can view your bookmarks by using </bookmark_list:{bookmarkListCommandID}>!
 
           If you'd like to share the bot with your friends, you can use the </invite:{inviteCommandID}> command.
           Alternatively, pass this invite link: <https://bookmarker.toroyashi.me/invite>
@@ -284,8 +284,8 @@ public class BookmarkComponentHandler(IDiscordRestInteractionAPI interactions, I
                 new EmbedField("Tags", bookmarkTagString, true),
                 new EmbedField("Attachments", bookmark.Attachments.Length.ToString(), true),
                 new EmbedField("Bookmarked", $"<t:{bookmark.CreatedAt.ToUnixTimeSeconds()}:R>", true),
-                new EmbedField("Author", $"<@{bookmark.AuthorID}>"),
-                new EmbedField("Channel", $"<#{bookmark.ChannelID}>"),
+                new EmbedField("Author", $"<@{bookmark.AuthorID}>", true),
+                new EmbedField("Channel", $"<#{bookmark.ChannelID}>", true),
                 new EmbedField("Content", bookmark.PartialContent!),
               ],
               Colour = Color.LightBlue,
@@ -313,8 +313,6 @@ public class BookmarkComponentHandler(IDiscordRestInteractionAPI interactions, I
                new ButtonComponent(ButtonComponentStyle.Link, "Jump to message", URL: $"https://discord.com/channels/{bookmarkResult.Entity.GuildID?.ToString() ?? "@me"}/{bookmarkResult.Entity.ChannelID}/{bookmarkResult.Entity.MessageID}"),
                new ButtonComponent(ButtonComponentStyle.Danger, "Delete bookmark", CustomID: CustomIDHelpers.CreateButtonIDWithState("delete_bookmark", bookmarkResult.Entity.ID)),
           ];
-
-          Console.WriteLine(embeds.Length);
 
           return (Result)await interactions.RespondAsync(context, embeds: embeds, components: [components], ephemeral: true);
      }
