@@ -10,10 +10,10 @@ public class BookmarkContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseSqlite("Data Source=bookmarks.db");
+        optionsBuilder.UseSqlite("Data Source=./bookmarks.db");
         base.OnConfiguring(optionsBuilder);
     }
-    
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(BookmarkContext).Assembly);

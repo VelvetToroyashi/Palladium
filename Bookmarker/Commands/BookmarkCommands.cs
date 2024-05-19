@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.Security.Cryptography;
@@ -14,6 +15,7 @@ using Remora.Discord.API.Objects;
 using Remora.Discord.Commands.Attributes;
 using Remora.Discord.Commands.Contexts;
 using Remora.Discord.Commands.Extensions;
+using Remora.Discord.Commands.Services;
 using Remora.Discord.Interactivity;
 using Remora.Rest.Core;
 using Remora.Results;
@@ -26,11 +28,14 @@ namespace Bookmarker.Commands;
 /// Commands for managing bookmarks.
 /// </summary>
 [PublicAPI]
+[AllowedContexts(InteractionContextType.Guild, InteractionContextType.PrivateChannel)]
+[DiscordInstallContext(ApplicationIntegrationType.UserInstallable)]
 public class BookmarkCommands
 (
      IInteractionContext context,
      IDiscordRestInteractionAPI interactions,
-     BookmarkService bookmarks
+     BookmarkService bookmarks,
+     SlashService slashService
 ) : CommandGroup
 {
      private const string NoBookmarksMessage = """
@@ -64,8 +69,6 @@ public class BookmarkCommands
 
      [Command("Bookmark This!")]
      [CommandType(ApplicationCommandType.Message)]
-     [AllowedContexts(InteractionContextType.Guild, InteractionContextType.PrivateChannel)]
-     [DiscordInstallContext(ApplicationIntegrationType.UserInstallable)]
      public async Task<Result> CreateQuickBookmarkAsync(IPartialMessage message)
      {
           Snowflake? guildID = context.Interaction.GuildID.AsNullable();
@@ -82,8 +85,6 @@ public class BookmarkCommands
 
      [Command("Bookmark This! (Advanced)")]
      [CommandType(ApplicationCommandType.Message)]
-     [AllowedContexts(InteractionContextType.Guild, InteractionContextType.PrivateChannel)]
-     [DiscordInstallContext(ApplicationIntegrationType.UserInstallable)]
      public async Task<Result> CreateBookmarkAdvancedAsync(IPartialMessage message)
      {
           Snowflake userID = context.Interaction.Member.Map(m => m.User.Value).OrDefault(() => context.Interaction.User.Value).ID;
@@ -133,11 +134,9 @@ public class BookmarkCommands
           );
      }
 
-     [Command("get_bookmarks")]
-     [CommandType(ApplicationCommandType.ChatInput)]
-     [AllowedContexts(InteractionContextType.Guild, InteractionContextType.PrivateChannel, InteractionContextType.BotDM)]
-     [DiscordInstallContext(ApplicationIntegrationType.UserInstallable)]
-     public async Task<Result> GetBookmarksAsync(string? tag = null)
+     [Command("bookmark_list")]
+     [Description("Get a list of your bookmarks.")]
+     public async Task<Result> GetBookmarksAsync([Description("Filter by bookmarks with this tag")] string? tag = null)
      {
           Snowflake userID = context.Interaction.Member.Map(m => m.User.Value).OrDefault(() => context.Interaction.User.Value).ID;
 
@@ -158,6 +157,50 @@ public class BookmarkCommands
           }
 
           return (Result)await interactions.RespondAsync(context, embeds: [embed], components: sentComponents, ephemeral: true);
+     }
+
+     [Command("invite")]
+     [Description("Get the invite link for the bot.")]
+     public async Task<Result> GetInviteLinkAsync()
+          => (Result)await interactions.RespondAsync(context, $"https://discord.com/api/oauth2/authorize?client_id={context.Interaction.ApplicationID}", ephemeral: true);
+
+     [Command("help")]
+     [Description("Shows a tutorial on how to use the bot.")]
+     public async Task<Result> GetHelpAsync()
+     {
+          Snowflake bookmarkListCommandID = slashService.CommandMap.First(c => c.Value.AsT1.Key == "bookmark_list").Key.CommandID;
+          Snowflake inviteCommandID = slashService.CommandMap.First(c => c.Value.AsT1.Key == "invite").Key.CommandID;
+
+          const string githubLink = "https://github.com/VelvetToroyashi/Palladium/issues/new";
+          const string supportServerLink = "https://discord.gg/MMw2aXuHSQ";
+
+          var content =
+          $"""
+          First and foremost, thanks for using Bookmarker! 
+          Here's a quick guide on how to use the bot:
+
+          Bookmarking is done by right-clicking (or on mobile, long-pressing) 
+          and then selecting Apps ➜ Bookmark This! or Apps ➜ Bookmark This! (Advanced).
+
+          The basic command will bookmark the message you clicked on, while the advanced command
+          will prompt you for a *tag* to add to the bookmark. Tags are useful for organizing your bookmarks.
+
+          You can view your bookmarks by using the </bookmark_list:{bookmarkListCommandID}>!
+
+          If you'd like to share the bot with your friends, you can use the </invite:{inviteCommandID}> command.
+          Alternatively, pass this invite link: https://bookmarker.toroyashi.me/invite
+
+          If you've encountered a bug with the bot, or have any suggestions, please [open an issue on GitHub]({githubLink}).
+          Alternatively, join the [support server]({supportServerLink}).
+          """;
+
+          ButtonComponent[] links =
+          [
+               new ButtonComponent(ButtonComponentStyle.Link, "Open an Issue", URL: githubLink),
+               new ButtonComponent(ButtonComponentStyle.Link, "Join the Support Server", URL: supportServerLink)
+          ];
+
+          return (Result)await interactions.RespondAsync(context, content, components: [links], ephemeral: true);
      }
 
      internal static void CreateEmbedAndSelectComponent
