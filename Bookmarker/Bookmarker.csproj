@@ -9,17 +9,16 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.4">
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.6">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.4" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.6" />
       <PackageReference Include="Remora.Commands" Version="10.0.5" />
-      <PackageReference Include="Remora.Discord.API" Version="78.0.0" />
       <PackageReference Include="Remora.Discord.API.Abstractions" Version="83.0.0" />
-      <PackageReference Include="Remora.Discord.Commands" Version="29.0.2" />
+      <PackageReference Include="Remora.Discord.Commands" Version="28.1.0" />
       <PackageReference Include="Remora.Discord.Gateway" Version="12.0.2" />
-      <PackageReference Include="Remora.Discord.Interactivity" Version="4.5.3" />
+      <PackageReference Include="Remora.Discord.Interactivity" Version="4.5.4" />
       <PackageReference Include="Remora.Discord.Rest" Version="51.0.0" />
     </ItemGroup>
 
