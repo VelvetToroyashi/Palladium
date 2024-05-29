@@ -273,7 +273,7 @@ public class BookmarkComponentHandler(IDiscordRestInteractionAPI interactions, I
           int embedCount = bookmark.Attachments.Length > 1 ? bookmark.Attachments.Length : 1;
           Embed[] embeds = new Embed[embedCount];
 
-          string bookmarkTagString = bookmark.Tags.Any() ? string.Join(", ", bookmark.Tags) : "None";
+          string bookmarkTagString = bookmark.Tags.Length > 0 ? string.Join(", ", bookmark.Tags) : "None";
 
           // Create the first embed outside the loop
           Embed firstEmbed = new()
