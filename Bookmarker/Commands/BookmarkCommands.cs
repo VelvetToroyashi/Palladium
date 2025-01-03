@@ -78,7 +78,9 @@ public class BookmarkCommands
 
           string content = bookmark.IsSuccess
               ? "Bookmark created!"
-              : "Failed to create bookmark!";
+              : "Failed to create bookmark! \n" +
+                "If this issue persists, please forward the following to `@velvet.toroyashi`: \n" +
+                $"```{bookmark.Error.Message}```";
 
           return (Result)await interactions.RespondAsync(context, content, ephemeral: true);
      }
