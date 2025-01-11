@@ -103,8 +103,7 @@ public class BookmarkCommands
           (
                CustomIDHelpers.CreateModalIDWithState("create_bookmark", state),
                "Create a bookmark",
-               new IMessageComponent[]
-               {
+               [
                     new ActionRowComponent
                     (
                          [
@@ -120,8 +119,8 @@ public class BookmarkCommands
                                    "Tags for the bookmark, seperated by commas"
                               )
                          ]
-                    )
-               }
+                    ),
+               ]
           );
 
           return await interactions.CreateInteractionResponseAsync
@@ -164,7 +163,7 @@ public class BookmarkCommands
      [Command("invite")]
      [Description("Get the invite link for the bot.")]
      public async Task<Result> GetInviteLinkAsync()
-          => (Result)await interactions.RespondAsync(context, $"https://discord.com/api/oauth2/authorize?client_id={context.Interaction.ApplicationID}", ephemeral: true);
+          => (Result)await interactions.RespondAsync(context, $"https://discord.com/application-directory/{context.Interaction.ApplicationID}", ephemeral: true);
 
      [Command("help")]
      [Description("Shows a tutorial on how to use the bot.")]
