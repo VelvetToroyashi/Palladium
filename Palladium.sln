@@ -12,6 +12,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PalladiumUtils", "PalladiumUtils\PalladiumUtils.csproj", "{17EB8E40-FD2D-4987-B3EA-7EFD42E959BA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rhodium", "Rhodium\Rhodium.csproj", "{A815849D-1411-4BB2-8046-AEA79C8D2A74}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,5 +31,9 @@ Global
 		{17EB8E40-FD2D-4987-B3EA-7EFD42E959BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{17EB8E40-FD2D-4987-B3EA-7EFD42E959BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{17EB8E40-FD2D-4987-B3EA-7EFD42E959BA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A815849D-1411-4BB2-8046-AEA79C8D2A74}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A815849D-1411-4BB2-8046-AEA79C8D2A74}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A815849D-1411-4BB2-8046-AEA79C8D2A74}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A815849D-1411-4BB2-8046-AEA79C8D2A74}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
