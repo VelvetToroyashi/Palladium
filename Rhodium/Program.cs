@@ -9,6 +9,7 @@ using Remora.Discord.Commands.Parsers;
 using Remora.Discord.Commands.Services;
 using Remora.Discord.Gateway;
 using Remora.Discord.Gateway.Extensions;
+using RemoraHTTPInteractions.Extensions;
 using Rhodium.Commands;
 using Rhodium.Data;
 using Rhodium.Services;
@@ -21,7 +22,7 @@ builder.Configuration
        .AddJsonFile("config.json", optional: true);
 
 builder.Services.AddDiscordGateway(s => s.GetService<IConfiguration>()!["CLIENT_TOKEN"]!);
-//builder.Services.AddHttpInteractions();
+builder.Services.AddHttpInteractions();
 
 builder.Services
        .AddDiscordCommands(true, false)
@@ -53,5 +54,4 @@ await db.MigrateAsync();
 
 app.AddInteractionEndpoint();
 
-_ = app.Services.GetRequiredService<DiscordGatewayClient>().RunAsync(CancellationToken.None);
 await app.RunAsync();
