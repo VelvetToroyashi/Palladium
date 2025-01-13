@@ -8,6 +8,7 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0-alpine AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Rhodium/Rhodium.csproj", "Rhodium/"]
+COPY ["PalladiumUtils/PalladiumUtils.csproj", "PalladiumUtils/"]
 RUN dotnet restore "Rhodium/Rhodium.csproj"
 COPY . .
 WORKDIR "/src/Rhodium"
