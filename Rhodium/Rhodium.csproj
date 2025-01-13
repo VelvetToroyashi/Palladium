@@ -15,11 +15,21 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
       <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
       <PackageReference Include="Microsoft.Recognizers.Text" Version="1.8.11" />
+      <PackageReference Include="Microsoft.Recognizers.Text.NumberWithUnit" Version="1.8.11" />
       <PackageReference Include="Remora.Discord.API.Abstractions" Version="82.0.0" />
       <PackageReference Include="Remora.Discord.Commands" Version="28.1.0" />
       <PackageReference Include="Remora.Discord.Gateway" Version="12.0.2" />
+      <PackageReference Include="VTP.Remora.Discord.HTTPInteractions" Version="1.0.7" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\PalladiumUtils\PalladiumUtils.csproj" />
     </ItemGroup>
 
 </Project>
