@@ -52,7 +52,7 @@ public class RhodiumCommands
 
     [Command("configure")]
     [Description("Set your preferred units for temperature and measurement.")]
-    public async Task<IResult> ConfigureAsync(RhodiumMeasurement preferredMeasurement, RhodiumTemperature preferredTemperature)
+    public async Task<IResult> ConfigureAsync([Option("measurement_system")] RhodiumMeasurement preferredMeasurement, [Option("temperature")] RhodiumTemperature preferredTemperature)
     {
         await using RhodiumContext dbContext = await dbContextFactory.CreateDbContextAsync();
 
@@ -65,7 +65,7 @@ public class RhodiumCommands
             {
                 ID = userID,
                 PreferredMeasurementUnit = preferredMeasurement,
-                PreferredTemperatureUnit = preferredTemperature
+                PreferredTemperatureUnit = preferredTemperature,
             };
 
             await dbContext.UserConfigs.AddAsync(userConfig);
