@@ -51,7 +51,7 @@ public class UnitConversionService(IDbContextFactory<RhodiumContext> dbContextFa
                 continue;
             }
 
-            conversions.Add(new UnitConversion($"{value} {unit}", $"{convertedValue.Entity} {userConfig.PreferredTemperatureUnit}"));
+            conversions.Add(new UnitConversion($"`{temperature.Text}`", $"{convertedValue.Entity}{userConfig.PreferredTemperatureUnit.ToString()[0]}"));
         }
 
 
@@ -111,10 +111,12 @@ public class UnitConversionService(IDbContextFactory<RhodiumContext> dbContextFa
 
         return (unit, preferredUnit) switch
         {
-            ("C", RhodiumTemperature.Celsius) => Result<double>.FromError(new InvalidOperationError("Placeholder error becuase the units are the same")),
-            ("F", RhodiumTemperature.Fahrenheit) => Result<double>.FromError(new InvalidOperationError("Placeholder error becuase the units are the same")),
-            ("C", RhodiumTemperature.Fahrenheit) => temperature * 9 / 5 + 32,
-            ("F", RhodiumTemperature.Celsius) => (temperature - 32) * 5 / 9,
+            ("Celsius", RhodiumTemperature.Celsius) => Result<double>.FromError(new InvalidOperationError("Placeholder error becuase the units are the same")),
+            ("Fahrenheit", RhodiumTemperature.Fahrenheit) => Result<double>.FromError(new InvalidOperationError("Placeholder error becuase the units are the same")),
+            ("Celsius", RhodiumTemperature.Fahrenheit) => temperature * 9 / 5 + 32,
+            ("Fahrenheit", RhodiumTemperature.Celsius) => (temperature - 32) * 5 / 9,
+            ("Degree", RhodiumTemperature.Celsius) => ConvertTemperature(value, "Fahrenheit", RhodiumTemperature.Celsius).Entity,
+            ("Degree", RhodiumTemperature.Fahrenheit) => ConvertTemperature(value, "Celsius", RhodiumTemperature.Fahrenheit).Entity,
             _ => throw new ArgumentOutOfRangeException(nameof(preferredUnit), preferredUnit, "Invalid temperature unit.")
         };
     }
