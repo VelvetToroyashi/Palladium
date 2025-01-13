@@ -1,4 +1,4 @@
-using Microsoft.Recognizers.Text.NumberWithUnit;
+
 using Remora.Rest.Core;
 
 namespace Rhodium.Data;
@@ -13,5 +13,4 @@ public class RhodiumUserConfig
     public RhodiumTemperature PreferredTemperatureUnit { get; set; }
 
     public RhodiumMeasurement PreferredMeasurementUnit { get; set; }
-
 }
