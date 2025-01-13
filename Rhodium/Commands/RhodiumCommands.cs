@@ -13,6 +13,7 @@ using IResult = Remora.Results.IResult;
 
 namespace Rhodium.Commands;
 
+[Ephemeral]
 [AllowedContexts(InteractionContextType.Guild, InteractionContextType.PrivateChannel)]
 [DiscordInstallContext(ApplicationIntegrationType.GuildInstallable, ApplicationIntegrationType.UserInstallable)]
 public class RhodiumCommands
@@ -32,6 +33,8 @@ public class RhodiumCommands
         if (!conversions.IsSuccess)
         {
             await interactionAPI.CreateFollowupMessageAsync(context.Interaction.ApplicationID, context.Interaction.Token, conversions.Error.Message);
+
+            return Result.Success;
         }
 
         var conversionStrings = conversions.Entity.Select(x => $"{x.OriginalUnit} -> {x.ConvertedUnit}").ToArray();
