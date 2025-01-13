@@ -51,7 +51,7 @@ public class UnitConversionService(IDbContextFactory<RhodiumContext> dbContextFa
                 continue;
             }
 
-            conversions.Add(new UnitConversion($"`{temperature.Text}`", $"{convertedValue.Entity}{userConfig.PreferredTemperatureUnit.ToString()[0]}"));
+            conversions.Add(new UnitConversion($"`{temperature.Text}`", $"{convertedValue.Entity:N2}{userConfig.PreferredTemperatureUnit.ToString()[0]}"));
         }
 
 
