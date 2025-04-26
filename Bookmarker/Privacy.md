@@ -4,14 +4,23 @@ Bookmarker ("the Bot") respects your privacy rights and is committed to protecti
 
 **Information Collected**
 
-The Bot collects and stores the following information:
+The Bot collects and stores the following information when you create a bookmark:
 
-- **Message Content**: Partial content of messages that are bookmarked by users.
-- **Message Metadata**: IDs of the channel, message, and guild where the bookmarked message is located.
-- **Attachments**: Links to any attachments included in bookmarked messages.
-- **User ID**: The Discord user ID of individuals using the bot to create bookmarks.
-
+- **Message Content**: A short preview and a longer excerpt (up to 500 characters) of the text content of the bookmarked message.
+- **Message Metadata**: The unique IDs of the Discord channel, message, server (guild, if applicable), and the original message author.
+- **Attachments**: Direct links to any files (images, videos, etc.) attached to the bookmarked message or embedded within it.
+- **User ID**: Your Discord user ID, to associate the bookmark with your account.
+- **Tags**: Any tags you optionally add to the bookmark for organization.
+- **Timestamp**: The date and time when the bookmark was created.
 This information is stored only for as long as a bookmark for a given message exists and/or as long as a user maintains bookmarks with the bot.
+
+**Your Rights Regarding Your Data**
+
+You have control over the bookmarks you create with the Bot:
+
+*   **Access:** You can view all your stored bookmarks at any time using the Bot's commands (e.g., `/bookmarks list`).
+*   **Deletion:** You can delete any of your bookmarks using the Bot's commands. Deleting a bookmark permanently removes all associated stored data (content excerpt, metadata, tags, etc.) from the Bot's database.
+*   **Modification:** You can add, remove, or change the tags associated with your bookmarks using the relevant Bot commands.
 
 **Use of Information**
 
