@@ -37,7 +37,7 @@ public partial class BookmarkService(IDbContextFactory<BookmarkContext> contextF
     {
         await using BookmarkContext context = await contextFactory.CreateDbContextAsync();
 
-        string partialContent = this.ExtractMessageContent(bookmarkMessage);
+        (string partialContent, string? fullContent) = this.ExtractMessageContent(bookmarkMessage);
         Regex attachmentRegex = GetAttachmentRegex();
 
         var messageAttachments = bookmarkMessage
@@ -64,6 +64,7 @@ public partial class BookmarkService(IDbContextFactory<BookmarkContext> contextF
             AuthorID = bookmarkMessage.Author.Value.ID,
             ChannelID = bookmarkMessage.ChannelID.Value,
             PartialContent = partialContent,
+            Content = fullContent,
         };
 
         try
@@ -93,11 +94,11 @@ public partial class BookmarkService(IDbContextFactory<BookmarkContext> contextF
     }
 
 
-    private string ExtractMessageContent(IPartialMessage bookmarkMessage)
+    private (string, string?) ExtractMessageContent(IPartialMessage bookmarkMessage)
     {
         var content = bookmarkMessage.Content.OrDefault();
 
-        return string.IsNullOrEmpty(content) ? "[Message does not contain content]" : content.Truncate(45, "[...]");
+        return string.IsNullOrEmpty(content) ? ("[Message does not contain content]", null) : (content.Truncate(45, "[...]"), content.Truncate(500, "[...]"));
     }
 
     /// <summary>

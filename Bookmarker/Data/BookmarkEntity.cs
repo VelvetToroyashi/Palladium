@@ -25,7 +25,10 @@ public class BookmarkEntity
     public string[] Attachments { get; set; }
     
     [StringLength(50)]
-    public string? PartialContent { get; set; }
+    public string PartialContent { get; set; }
+    
+    [StringLength(500)]
+    public string? Content { get; set; }
     
     public Snowflake AuthorID { get; set; }
     
