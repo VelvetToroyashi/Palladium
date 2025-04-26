@@ -45,6 +45,14 @@ public partial class BookmarkService(IDbContextFactory<BookmarkContext> contextF
                                  .OrDefault([])
                                  .Select(x => attachmentRegex.Match(x.Url).Groups["Link"].Value);
 
+        var linkedAttachments = bookmarkMessage
+                                .Embeds
+                                .OrDefault([])
+                                .Where(e => e.Type.Map(t => t is EmbedType.Image or EmbedType.Video).OrDefault(false))
+                                .Select(x => x.Url.Value);
+
+        messageAttachments = messageAttachments.Concat(linkedAttachments).Take(10);
+
         BookmarkEntity bookmark = new()
         {
             Tags = [..tags],
