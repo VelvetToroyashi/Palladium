@@ -17,7 +17,7 @@ public partial class BookmarkService(IDbContextFactory<BookmarkContext> contextF
     [GeneratedRegex(@"(?<Link>https:\/\/(?:cdn|media)\.discordapp\.(?:com|net)\/attachments\/\d{17,20}\/\d{17,20}\/\S+\.(?:png|jpe?g|mp4|webm|webp))\S+")]
     private static partial Regex GetAttachmentRegex();
 
-    private static readonly IReadOnlyList<string> allowedExtensions = ["png", "jpg", "jpeg", "mp4", "webm", "webp"];
+    private static readonly IReadOnlyList<string> allowedExtensions = [".png", ".jpg", ".jpeg", ".mp4", ".webm", ".webp"];
 
     private const string BookmarkNotFoundError = "The bookmark you're looking for doesn't exist!";
 
