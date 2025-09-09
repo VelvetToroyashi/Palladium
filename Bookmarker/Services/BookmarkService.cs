@@ -14,8 +14,10 @@ namespace Bookmarker.Services;
 /// <param name="contextFactory">A factory to create a new <see cref="BookmarkContext"/>.</param>
 public partial class BookmarkService(IDbContextFactory<BookmarkContext> contextFactory)
 {
-    [GeneratedRegex(@"(?<Link>https:\/\/(?:cdn|media)\.discordapp\.(?:com|net)\/attachments\/\d{17,20}\/\d{17,20}\/\S+\.(?:png|jpe?g|mp4|webm|webp))\b")]
+    [GeneratedRegex(@"(?<Link>https:\/\/(?:cdn|media)\.discordapp\.(?:com|net)\/attachments\/\d{17,20}\/\d{17,20}\/\S+\.(?:png|jpe?g|mp4|webm|webp))\S+")]
     private static partial Regex GetAttachmentRegex();
+
+    private static readonly IReadOnlyList<string> allowedExtensions = ["png", "jpg", "jpeg", "mp4", "webm", "webp"];
 
     private const string BookmarkNotFoundError = "The bookmark you're looking for doesn't exist!";
 
@@ -38,12 +40,12 @@ public partial class BookmarkService(IDbContextFactory<BookmarkContext> contextF
         await using BookmarkContext context = await contextFactory.CreateDbContextAsync();
 
         (string partialContent, string? fullContent) = this.ExtractMessageContent(bookmarkMessage);
-        Regex attachmentRegex = GetAttachmentRegex();
 
         var messageAttachments = bookmarkMessage
                                  .Attachments
                                  .OrDefault([])
-                                 .Select(x => attachmentRegex.Match(x.Url).Groups["Link"].Value);
+                                 .Where(url => allowedExtensions.Contains(Path.GetExtension(url.Filename)))
+                                 .Select(url => url.Url);
 
         var linkedAttachments = bookmarkMessage
                                 .Embeds
@@ -80,6 +82,25 @@ public partial class BookmarkService(IDbContextFactory<BookmarkContext> contextF
         }
     }
 
+    public async Task<IReadOnlyList<string>> GetUserTagsAsync
+    (
+        Snowflake userID
+    )
+    {
+        await using BookmarkContext context = await contextFactory.CreateDbContextAsync();
+        
+        IReadOnlyList<string> bookmarks = await 
+            context
+            .Bookmarks
+            .Where(b => b.UserID == userID)
+            .SelectMany(b => b.Tags)
+            .Distinct()
+            .OrderBy(t => t)
+            .ToListAsync();
+        
+        return bookmarks;
+    }
+
     /// <summary>
     /// Checks if a user has bookmarked a message.
     /// </summary>
@@ -96,7 +117,10 @@ public partial class BookmarkService(IDbContextFactory<BookmarkContext> contextF
 
     private (string, string?) ExtractMessageContent(IPartialMessage bookmarkMessage)
     {
-        var content = bookmarkMessage.Content.OrDefault();
+        Regex attachmentRegex = GetAttachmentRegex();
+        var content = bookmarkMessage.Content.OrDefault(string.Empty);
+        
+        content = attachmentRegex.Replace(content, string.Empty);
 
         return string.IsNullOrEmpty(content) ? ("[Message does not contain content]", null) : (content.Truncate(45, "[...]"), content.Truncate(500, "[...]"));
     }

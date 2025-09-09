@@ -1,11 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
         <UserSecretsId>a48672aa-ad5b-49c8-a2ca-787a3e860064</UserSecretsId>
+        <NoWarn>NU1605</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>
@@ -14,12 +15,14 @@
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
       <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.6" />
-      <PackageReference Include="Remora.Commands" Version="10.0.5" />
-      <PackageReference Include="Remora.Discord.API.Abstractions" Version="82.0.0" />
-      <PackageReference Include="Remora.Discord.Commands" Version="28.1.0" />
-      <PackageReference Include="Remora.Discord.Gateway" Version="12.0.2" />
-      <PackageReference Include="Remora.Discord.Interactivity" Version="4.5.4" />
-      <PackageReference Include="Remora.Discord.Rest" Version="51.0.0" />
+      <PackageReference Include="Remora.Commands" Version="11.0.2" />
+      <PackageReference Include="Remora.Discord.API.Abstractions" Version="84.0.0" />
+      <PackageReference Include="Remora.Discord.Commands" Version="30.0.0" />
+      <PackageReference Include="Remora.Discord.Gateway" Version="13.0.1" />
+      <PackageReference Include="Remora.Discord.Hosting" Version="7.0.1" />
+      <PackageReference Include="Remora.Discord.Interactivity" Version="6.0.1" />
+      <PackageReference Include="Remora.Discord.Rest" Version="53.0.0" />
+      <PackageReference Include="VTP.Remora.Discord.HTTPInteractions" Version="1.0.9" />
     </ItemGroup>
 
     <ItemGroup>

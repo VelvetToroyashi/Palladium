@@ -1,19 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <NoWarn>NU1605</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>
       <PackageReference Include="JetBrains.Annotations" Version="2023.3.0" />
       <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.6" />
-      <PackageReference Include="Remora.Discord.API.Abstractions" Version="82.0.0" />
-      <PackageReference Include="Remora.Discord.Commands" Version="28.1.0" />
-      <PackageReference Include="Remora.Discord.Gateway" Version="12.0.2" />
-      <PackageReference Include="VTP.Remora.Discord.HTTPInteractions" Version="1.0.7" />
+      <PackageReference Include="Remora.Discord.API.Abstractions" Version="84.0.0" />
+      <PackageReference Include="Remora.Discord.Commands" Version="30.0.0" />
+      <PackageReference Include="Remora.Discord.Gateway" Version="13.0.1" />
       <FrameworkReference Include="Microsoft.AspNetCore.App" />
+      <PackageReference Include="Remora.Discord.Hosting" Version="7.0.1" />
+      <PackageReference Include="VTP.Remora.Discord.HTTPInteractions" Version="1.0.9" />
     </ItemGroup>
 
 </Project>

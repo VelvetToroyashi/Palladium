@@ -20,7 +20,8 @@ public static class InteractionExtensions
         string? content = null, 
         IReadOnlyList<IEmbed>? embeds = null, 
         IEnumerable<IEnumerable<IMessageComponent>>? components = null, 
-        bool ephemeral = false
+        bool ephemeral = false,
+        bool isComponentsV2 = false
     )
     {
         var componentsAsActionRows = components
@@ -32,6 +33,18 @@ public static class InteractionExtensions
                                             cs => (IMessageComponent)new ActionRowComponent(cs.ToArray())
                                          ).ToArray()
                                      );
+
+        MessageFlags flags = default;
+
+        if (isComponentsV2)
+        {
+            flags |= MessageFlags.IsComponentsV2;
+        }
+
+        if (ephemeral)
+        {
+            flags |= MessageFlags.Ephemeral;
+        }
         
         return await interactions.CreateFollowupMessageAsync
         (
@@ -40,8 +53,43 @@ public static class InteractionExtensions
             content.AsOptional(),
             embeds: embeds.AsOptional(),
             components: componentsAsActionRows,
-            flags: ephemeral ? MessageFlags.Ephemeral : default
+            flags: flags
         );
     }
     
+    public static async Task<Result<IMessage>> RespondComponentsV2Async
+    (
+        this IDiscordRestInteractionAPI interactions, 
+        IInteractionContext context, 
+        string? content = null, 
+        IReadOnlyList<IEmbed>? embeds = null, 
+        IEnumerable<IMessageComponent>? components = null, 
+        bool ephemeral = false,
+        bool isComponentsV2 = false
+    )
+    {
+
+        MessageFlags flags = default;
+
+        if (isComponentsV2)
+        {
+            flags |= MessageFlags.IsComponentsV2;
+        }
+
+        if (ephemeral)
+        {
+            flags |= MessageFlags.Ephemeral;
+        }
+        
+        return await interactions.CreateFollowupMessageAsync
+        (
+            context.Interaction.ApplicationID,
+            context.Interaction.Token,
+            content.AsOptional(),
+            embeds: embeds.AsOptional(),
+            allowedMentions: new AllowedMentions((MentionType[])[]),
+            components: components?.ToArray() ?? default(Optional<IReadOnlyList<IMessageComponent>>),
+            flags: flags
+        );
+    }
 }
