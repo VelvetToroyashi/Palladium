@@ -74,6 +74,13 @@ public static class InteractionExtensions
         if (isComponentsV2)
         {
             flags |= MessageFlags.IsComponentsV2;
+
+            if (!string.IsNullOrEmpty(content) && components is null)
+            {
+                components = [new TextDisplayComponent(content)];
+                content = null;
+            }
+            
         }
 
         if (ephemeral)

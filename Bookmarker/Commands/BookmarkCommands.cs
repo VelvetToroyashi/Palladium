@@ -431,7 +431,7 @@ public class BookmarkComponentHandler(IDiscordRestInteractionAPI interactions, I
     }
 
     [Button("display_bookmark")]
-    [SuppressInteractionResponse(true)]
+    [SuppressInteractionResponse(false)]
     public async Task<Result> DisplayBookmarkAsync(string state)
     {
         _ = context.TryGetUserID(out Snowflake userID);
@@ -439,24 +439,18 @@ public class BookmarkComponentHandler(IDiscordRestInteractionAPI interactions, I
 
         if (!bookmarkResult.IsDefined(out BookmarkEntity? bookmark))
         {
-            return (Result)await interactions.RespondComponentsV2Async(context, "Bookmark not found!!");
+            return (Result)await interactions.RespondComponentsV2Async(context, bookmarkResult.Error!.Message, isComponentsV2: true, ephemeral: true);
         }
         
-        await interactions.CreateInteractionResponseAsync
+        await interactions.EditOriginalInteractionResponseAsync
         (
-            context.Interaction.ID,
+            context.Interaction.ApplicationID,
             context.Interaction.Token,
-            new InteractionResponse
-            (
-                InteractionCallbackType.UpdateMessage,
-                new(new InteractionMessageCallbackData
-                (
-                    AllowedMentions: new AllowedMentions((MentionType[]) []),
-                    Components: new(BookmarkCommands.GetBookmarkComponents(bookmark, true)))
-                )
-            )
+            allowedMentions: new AllowedMentions((MentionType[]) []),
+            flags:  MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
+            components: new(BookmarkCommands.GetBookmarkComponents(bookmark, true))
         );
-
+        
         List<IMessageComponent> components = 
         [
             new ContainerComponent
